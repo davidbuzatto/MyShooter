@@ -47,11 +47,11 @@ void createObstacles( GameWorld *gw, float blockSize, Color obstacleColor );
 void createObstaclesModel( Block *obstacles, int obstaclesQuantity );
 void destroyObstaclesModel( Block *obstacles, int obstaclesQuantity );
 
-void createWalls( GameWorld *gw, Color wallColor );
+void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight );
 
 void processOptionsInput( Player *player, GameWorld *gw );
-void processCameraInput( float *xCam, float *yCam, float *zCam );
-void processPlayerInput( Player *player, CameraType cameraType, float delta, bool keyboard );
+void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float delta );
+void processPlayerInputByGamepad( Player *player, CameraType cameraType, float delta );
 
 void resolveCollisionPlayerObstacles( Player *player, GameWorld *gw );
 void resolveCollisionEnemyObstacles( Enemy *enemy, GameWorld *gw );
@@ -65,3 +65,7 @@ void resolveCollisionBulletWorld( GameWorld *gw );
 void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp );
 
 void resetGameWorld( GameWorld *gw );
+void drawDebugInfo( GameWorld *gw );
+void drawGameoverOverlay( void );
+
+void processMapFile( const char *filePath, GameWorld *gw );

@@ -5,7 +5,7 @@
 #include "Types.h"
 #include "raylib.h"
 
-Player createPlayer();
+Player createPlayer( Vector3 pos );
 void drawPlayer( Player *player );
 void drawPlayerHud( Player *player );
 void updatePlayer( Player *player, float delta );

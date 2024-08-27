@@ -2,9 +2,13 @@
 
 #include "raylib.h"
 
+typedef enum GameWorldPlayerInputType {
+    GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD,
+    GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD
+} GameWorldPlayerInputType;
+
 typedef enum CameraType {
     CAMERA_TYPE_THIRD_PERSON_FIXED,
-    CAMERA_TYPE_THIRD_PERSON_FIXED_SHOULDER,
     CAMERA_TYPE_FIRST_PERSON,
     CAMERA_TYPE_FIRST_PERSON_MOUSE
 } CameraType;
@@ -284,5 +288,7 @@ typedef struct GameWorld {
     Block rightWall;
     Block farWall;
     Block nearWall;
+
+    GameWorldPlayerInputType playerInputType;
 
 } GameWorld;

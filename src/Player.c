@@ -13,7 +13,7 @@
 #include "raylib.h"
 #include "utils.h"
 
-Player createPlayer() {
+Player createPlayer( Vector3 pos ) {
 
     float cpThickness = 1.0f;
     float cpDiff = 0.7f;
@@ -22,11 +22,7 @@ Player createPlayer() {
     int maxBullets = 200;
 
     Player player = {
-        .pos = {
-            .x = 0.0f,
-            .y = 1.0f,
-            .z = -1.0f
-        },
+        .pos = pos,
         .lastPos = {
             .x = 0.0f,
             .y = 1.0f,

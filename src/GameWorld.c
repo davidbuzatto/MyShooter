@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
+#include <ctype.h>
 
 #include "Types.h"
 #include "GameWorld.h"
@@ -26,13 +28,15 @@
 const float GRAVITY = 50.0f;
 const int CAMERA_TYPE_QUANTITY = 4;
 const bool CREATE_OBSTACLES = true;
+const bool CREATE_ENEMIES = true;
+const bool CREATE_POWER_UPS = true;
 const int gamepadId = 0;
 
 int bulletCount = 0;
 int enemyCount = 0;
 int powerUpCount = 0;
 
-bool showInfo = true;
+bool showDebugInfo = true;
 bool drawWalls = true;
 
 float xCam = 0.0f;
@@ -63,15 +67,34 @@ GameWorld* createGameWorld( void ) {
 
     enemyColor = RED;
     enemyEyeColor = (Color){ 38, 0, 82, 255 };
-
     gw->previousMousePos = (Vector2){0};
 
-    gw->player = createPlayer();
-    createEnemies( gw, enemyColor, enemyEyeColor );
-    createPowerUps( gw );
+    /*processMapFile( "resources/maps/map1.txt", gw );
 
+    gw->enemyQuantity = 0;
+    gw->powerUpQuantity = 0;
+    gw->obstacleQuantity = 0;*/
+
+    gw->player = createPlayer( (Vector3){
+        .x = 0.0f,
+        .y = 1.0f,
+        .z = -1.0f
+    });
     gw->ground = createGround( blockSize, lines, columns );
-    createWalls( gw, wallColor );
+    createWalls( gw, wallColor, lines, columns, 10 );
+
+    if ( CREATE_ENEMIES ) {
+        createEnemies( gw, enemyColor, enemyEyeColor );
+    } else {
+        gw->enemyQuantity = 0;
+    }
+
+    if ( CREATE_POWER_UPS ) {
+        createPowerUps( gw );
+    } else {
+        gw->powerUpQuantity = 0;
+    }
+
     if ( CREATE_OBSTACLES ) {
         createObstacles( gw, blockSize, obstacleColor );
     } else {
@@ -83,6 +106,8 @@ GameWorld* createGameWorld( void ) {
     setupCamera( gw );
     updateCameraTarget( gw, &gw->player );
     updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
+
+    gw->playerInputType = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
 
     return gw;
 
@@ -122,9 +147,12 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
         Block *farWall = &gw->farWall;
         Block *nearWall = &gw->nearWall;
 
-        processCameraInput( &xCam, &yCam, &zCam );
-        processPlayerInput( player, gw->cameraType, delta, false );
-
+        if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD ) {
+            processPlayerInputByKeyboard( player, gw->cameraType, delta );
+        } else if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ) {
+            processPlayerInputByGamepad( player, gw->cameraType, delta );
+        }
+        
         updatePlayer( player, delta );
         updatePlayerCollisionProbes( player );
         
@@ -211,25 +239,12 @@ void drawGameWorld( GameWorld *gw ) {
     drawReticle( gw->cameraType, gw->player.weaponState, 30 );
 
     // debug info
-    if ( showInfo ) {
-        DrawFPS( 10, 10 );
-        DrawText( TextFormat( "player: x=%.1f, y=%.1f, z=%.1f", gw->player.pos.x, gw->player.pos.y, gw->player.pos.z ), 10, 30, 20, BLACK );
-        DrawText( TextFormat( "active bullets: %d", gw->player.bulletQuantity ), 10, 50, 20, BLACK );
-        DrawText( TextFormat( "active enemies: %d", gw->enemyQuantity ), 10, 70, 20, BLACK );
-        DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 90, 20, BLACK );
-        showCameraInfo( &gw->camera, 10, 110 );
+    if ( showDebugInfo ) {
+        drawDebugInfo( gw );
     }
 
     if ( gw->player.state == PLAYER_STATE_DEAD ) {
-        DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.85f ) );
-        int fontSizeDead = 60;
-        int fontSizeReset = 20;
-        const char *tDead = "YOU ARE DEAD!";
-        const char *tReset = "Start/<R> to Reset!";
-        int wDead = MeasureText( tDead, fontSizeDead );
-        int wReset = MeasureText( tReset, fontSizeReset );
-        DrawText( tDead, GetScreenWidth() / 2 - wDead / 2, GetScreenHeight() / 2 - fontSizeDead / 2 - 10, fontSizeDead, RED );
-        DrawText( tReset, GetScreenWidth() / 2 - wReset / 2, GetScreenHeight() / 2 - fontSizeReset / 2 + 30, fontSizeReset, RED );
+        drawGameoverOverlay();
     }
 
     EndDrawing();
@@ -281,7 +296,6 @@ void updateCameraTarget( GameWorld *gw, Player *player ) {
         case CAMERA_TYPE_THIRD_PERSON_FIXED:
             gw->camera.target = player->pos;
             break;
-        case CAMERA_TYPE_THIRD_PERSON_FIXED_SHOULDER:
         case CAMERA_TYPE_FIRST_PERSON:
         case CAMERA_TYPE_FIRST_PERSON_MOUSE:
             gw->camera.target.x = player->pos.x + cosH * firstPersonCameraTargetDist;
@@ -302,12 +316,6 @@ void updateCameraPosition( GameWorld *gw, Player *player, float xOffset, float y
             gw->camera.position.x = player->pos.x + xOffset;
             gw->camera.position.y = yOffset;
             gw->camera.position.z = player->pos.z + zOffset;
-            break;
-        case CAMERA_TYPE_THIRD_PERSON_FIXED_SHOULDER:
-            gw->camera.position = player->pos;
-            gw->camera.position.x += cosH * ( -player->dim.x * 4 );
-            gw->camera.position.y += player->dim.y;
-            gw->camera.position.z += sinH * ( -player->dim.z * 4 );
             break;
         case CAMERA_TYPE_FIRST_PERSON:
         case CAMERA_TYPE_FIRST_PERSON_MOUSE:
@@ -476,18 +484,18 @@ void destroyObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
     UnloadModel( baseObstacle->model );
 }
 
-void createWalls( GameWorld *gw, Color wallColor ) {
+void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight ) {
 
     gw->leftWall = (Block){
         .pos = {
-            .x = -52.0f,
-            .y = 5.0f,
+            .x = - ( groundColumns + 2 ),
+            .y = wallHeight / 2,
             .z = -1.0f
         },
         .dim = {
             .x = 2.0f, 
-            .y = 10.0f,
-            .z = 20.0f
+            .y = wallHeight,
+            .z = groundLines * 2
         },
         .color = wallColor,
         .visible = true,
@@ -497,14 +505,14 @@ void createWalls( GameWorld *gw, Color wallColor ) {
 
     gw->rightWall = (Block){
         .pos = {
-            .x = 50.0f,
-            .y = 5.0f,
+            .x = groundColumns,
+            .y = wallHeight / 2,
             .z = -1.0f
         },
         .dim = {
             .x = 2.0f, 
-            .y = 10.0f,
-            .z = 20.0f
+            .y = wallHeight,
+            .z = groundLines * 2
         },
         .color = wallColor,
         .visible = true,
@@ -515,12 +523,12 @@ void createWalls( GameWorld *gw, Color wallColor ) {
     gw->farWall = (Block){
         .pos = {
             .x = -1.0f,
-            .y = 5.0f,
-            .z = -12.0f
+            .y = wallHeight / 2,
+            .z = - ( groundLines + 2 )
         },
         .dim = {
-            .x = 100.0f, 
-            .y = 10.0f,
+            .x = groundColumns * 2, 
+            .y = wallHeight,
             .z = 2.0f
         },
         .color = wallColor,
@@ -532,12 +540,12 @@ void createWalls( GameWorld *gw, Color wallColor ) {
     gw->nearWall = (Block){
         .pos = {
             .x = -1.0f,
-            .y = 5.0f,
-            .z = 10.0f
+            .y = wallHeight / 2,
+            .z = groundLines
         },
         .dim = {
-            .x = 100.0f, 
-            .y = 10.0f,
+            .x = groundColumns * 2, 
+            .y = wallHeight,
             .z = 2.0f
         },
         .color = wallColor,
@@ -551,7 +559,7 @@ void createWalls( GameWorld *gw, Color wallColor ) {
 void processOptionsInput( Player *player, GameWorld *gw ) {
 
     if ( IsKeyPressed( KEY_ONE ) ) {
-        showInfo = !showInfo;
+        showDebugInfo = !showDebugInfo;
     }
 
     if ( IsKeyPressed( KEY_TWO ) ) {
@@ -586,129 +594,121 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
         player->immortal = !player->immortal;
     }
 
-}
-
-void processCameraInput( float *xCam, float *yCam, float *zCam ) {
-
-    if ( IsKeyDown( KEY_UP ) ) {
-        *yCam += 1;
-    } else if ( IsKeyDown( KEY_DOWN ) ) {
-        *yCam -= 1;
-    } else if ( IsKeyDown( KEY_LEFT ) ) {
-        *xCam -= 1;
-    } else if ( IsKeyDown( KEY_RIGHT ) ) {
-        *xCam += 1;
-    } else if ( IsKeyDown( KEY_KP_SUBTRACT ) ) {
-        *zCam -= 1;
-    } else if ( IsKeyDown( KEY_KP_ADD ) ) {
-        *zCam += 1;
+    if ( IsKeyPressed( KEY_K ) ) {
+        if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ) {
+            gw->playerInputType = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
+        } else {
+            gw->playerInputType = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
+        }
     }
 
 }
 
-void processPlayerInput( Player *player, CameraType cameraType, float delta, bool keyboard ) {
+void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float delta ) {
 
-    if ( keyboard ) {
+    if ( IsKeyDown( KEY_UP ) ) {
+        yCam += 1;
+    } else if ( IsKeyDown( KEY_DOWN ) ) {
+        yCam -= 1;
+    } else if ( IsKeyDown( KEY_LEFT ) ) {
+        xCam -= 1;
+    } else if ( IsKeyDown( KEY_RIGHT ) ) {
+        xCam += 1;
+    } else if ( IsKeyDown( KEY_KP_SUBTRACT ) ) {
+        zCam -= 1;
+    } else if ( IsKeyDown( KEY_KP_ADD ) ) {
+        zCam += 1;
+    }
 
-        // keyboard movement
-        if ( IsKeyDown( KEY_LEFT_CONTROL ) ) {
+    if ( IsKeyDown( KEY_LEFT_CONTROL ) ) {
+        player->speed = player->runningSpeed;
+    } else {
+        player->speed = player->walkingSpeed;
+    }
+
+    if ( IsKeyDown( KEY_W ) ) {
+        player->vel.x = cos( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
+        player->vel.z = -sin( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
+    } else if ( IsKeyDown( KEY_S ) ) {
+        player->vel.x = -cos( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
+        player->vel.z = sin( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
+    } else {
+        player->vel.x = 0.0f;
+        player->vel.z = 0.0f;
+    }
+
+    if ( IsKeyDown( KEY_A ) ) {
+        if ( cameraType == CAMERA_TYPE_FIRST_PERSON_MOUSE ) {
+            player->vel.x = cos( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * player->speed;
+            player->vel.z = -sin( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * player->speed;
+        } else {
+            player->rotationVel = player->rotationSpeed;
+        }
+    } else if ( IsKeyDown( KEY_D ) ) {
+        if ( cameraType == CAMERA_TYPE_FIRST_PERSON_MOUSE ) {
+            player->vel.x = cos( DEG2RAD * ( player->rotationHorizontalAngle - 90 ) ) * player->speed;
+            player->vel.z = -sin( DEG2RAD * ( player->rotationHorizontalAngle - 90 ) ) * player->speed;
+        } else {
+            player->rotationVel = -player->rotationSpeed;
+        }
+    } else {
+        player->rotationVel = 0.0f;
+    }
+
+    if ( IsKeyPressed( KEY_SPACE ) ) {
+        jumpPlayer( player );
+    }
+
+}
+
+void processPlayerInputByGamepad( Player *player, CameraType cameraType, float delta ) {
+
+    if ( IsGamepadAvailable( gamepadId ) ) {
+
+        // standard
+        float gpxLeft = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_X );
+        float gpyLeft = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_Y );
+
+        float gpxRight = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_X );
+        float gpyRight = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_Y );
+
+        if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_LEFT_THUMB ) ) {
             player->speed = player->runningSpeed;
-        } else {
-            player->speed = player->walkingSpeed;
         }
 
-        if ( IsKeyDown( KEY_W ) ) {
-            player->vel.x = cos( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
-            player->vel.z = -sin( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
-        } else if ( IsKeyDown( KEY_S ) ) {
-            player->vel.x = -cos( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
-            player->vel.z = sin( DEG2RAD * player->rotationHorizontalAngle ) * player->speed;
-        } else {
-            player->vel.x = 0.0f;
-            player->vel.z = 0.0f;
-        }
-
-        if ( IsKeyDown( KEY_A ) ) {
-            if ( cameraType == CAMERA_TYPE_FIRST_PERSON_MOUSE ) {
-                player->vel.x = cos( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * player->speed;
-                player->vel.z = -sin( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * player->speed;
-            } else {
-                player->rotationVel = player->rotationSpeed;
-            }
-        } else if ( IsKeyDown( KEY_D ) ) {
-            if ( cameraType == CAMERA_TYPE_FIRST_PERSON_MOUSE ) {
-                player->vel.x = cos( DEG2RAD * ( player->rotationHorizontalAngle - 90 ) ) * player->speed;
-                player->vel.z = -sin( DEG2RAD * ( player->rotationHorizontalAngle - 90 ) ) * player->speed;
-            } else {
-                player->rotationVel = -player->rotationSpeed;
+        if ( cameraType == CAMERA_TYPE_THIRD_PERSON_FIXED ) {
+            player->vel.x = player->speed * gpxLeft;
+            player->vel.z = player->speed * gpyLeft;
+            if ( player->vel.x != 0.0f || player->vel.z != 0.0f ) {
+                player->rotationHorizontalAngle = RAD2DEG * atan2( -player->vel.z, player->vel.x );
             }
         } else {
-            player->rotationVel = 0.0f;
+            player->rotationHorizontalAngle += gpxRight * delta * -player->rotationSpeed;
+            player->rotationVerticalAngle += gpyRight * delta * -player->rotationSpeed;
+            if ( player->rotationVerticalAngle < 0.0f ) {
+                player->rotationVerticalAngle = 0.0f;
+            } else if ( player->rotationVerticalAngle > 180.0f ) {
+                player->rotationVerticalAngle = 180.0f;
+            }
+            float xMultiplier = ( ( -cos( DEG2RAD * player->rotationHorizontalAngle ) * gpyLeft ) +
+                                ( -cos( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * gpxLeft ) ) / 2.0f;
+            float zMultiplier = ( ( sin( DEG2RAD * player->rotationHorizontalAngle ) * gpyLeft ) +
+                                ( sin( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * gpxLeft ) ) / 2.0f;
+            player->vel.x = player->speed * xMultiplier;
+            player->vel.z = player->speed * zMultiplier;
         }
 
-        if ( IsKeyPressed( KEY_SPACE ) ) {
+        if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_RIGHT_FACE_DOWN ) ) {
             jumpPlayer( player );
         }
 
-    } else {
-
-        // joystick
-        if ( IsGamepadAvailable( gamepadId ) ) {
-
-            // tank
-            /*float gpx = -GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_X );
-            float gpy = -GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_Y );
-
-            player->rotationVel = player->rotationSpeed * gpx;
-            player->vel.x = cos( DEG2RAD * player->rotationAngle ) * player->speed * gpy;
-            player->vel.z = -sin( DEG2RAD * player->rotationAngle ) * player->speed * gpy;*/
-
-            // standard
-            float gpxLeft = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_X );
-            float gpyLeft = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_Y );
-
-            float gpxRight = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_X );
-            float gpyRight = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_Y );
-
-            if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_LEFT_THUMB ) ) {
-                player->speed = player->runningSpeed;
+        if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
+            player->weaponState = PLAYER_WEAPON_STATE_READY;
+            if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                playerShotBullet( player );
             }
-
-            if ( cameraType == CAMERA_TYPE_THIRD_PERSON_FIXED ) {
-                player->vel.x = player->speed * gpxLeft;
-                player->vel.z = player->speed * gpyLeft;
-                if ( player->vel.x != 0.0f || player->vel.z != 0.0f ) {
-                    player->rotationHorizontalAngle = RAD2DEG * atan2( -player->vel.z, player->vel.x );
-                }
-            } else {
-                player->rotationHorizontalAngle += gpxRight * delta * -player->rotationSpeed;
-                player->rotationVerticalAngle += gpyRight * delta * -player->rotationSpeed;
-                if ( player->rotationVerticalAngle < 0.0f ) {
-                    player->rotationVerticalAngle = 0.0f;
-                } else if ( player->rotationVerticalAngle > 180.0f ) {
-                    player->rotationVerticalAngle = 180.0f;
-                }
-                float xMultiplier = ( ( -cos( DEG2RAD * player->rotationHorizontalAngle ) * gpyLeft ) +
-                                    ( -cos( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * gpxLeft ) ) / 2.0f;
-                float zMultiplier = ( ( sin( DEG2RAD * player->rotationHorizontalAngle ) * gpyLeft ) +
-                                    ( sin( DEG2RAD * ( player->rotationHorizontalAngle + 90 ) ) * gpxLeft ) ) / 2.0f;
-                player->vel.x = player->speed * xMultiplier;
-                player->vel.z = player->speed * zMultiplier;
-            }
-
-            if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_RIGHT_FACE_DOWN ) ) {
-                jumpPlayer( player );
-            }
-
-            if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
-                player->weaponState = PLAYER_WEAPON_STATE_READY;
-                if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                    playerShotBullet( player );
-                }
-            } else {
-                player->weaponState = PLAYER_WEAPON_STATE_IDLE;
-            }
-
+        } else {
+            player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
 
     }
@@ -995,7 +995,7 @@ void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp ) {
 
 void resetGameWorld( GameWorld *gw ) {
 
-    xCam = 0;
+    /*xCam = 0;
     yCam = 25.0f;
     zCam = 30.0f;
 
@@ -1022,6 +1022,117 @@ void resetGameWorld( GameWorld *gw ) {
 
     gw->cameraType = CAMERA_TYPE_FIRST_PERSON;
     updateCameraTarget( gw, &gw->player );
-    updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
+    updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );*/
+
+}
+
+void drawDebugInfo( GameWorld *gw ) {
+    DrawFPS( 10, 10 );
+    DrawText( TextFormat( "player: x=%.1f, y=%.1f, z=%.1f", gw->player.pos.x, gw->player.pos.y, gw->player.pos.z ), 10, 30, 20, BLACK );
+    DrawText( TextFormat( "active bullets: %d", gw->player.bulletQuantity ), 10, 50, 20, BLACK );
+    DrawText( TextFormat( "active enemies: %d", gw->enemyQuantity ), 10, 70, 20, BLACK );
+    DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 90, 20, BLACK );
+    DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 110, 20, BLACK );
+    showCameraInfo( &gw->camera, 10, 130 );
+}
+
+void drawGameoverOverlay( void ) {
+    DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.85f ) );
+    int fontSizeDead = 60;
+    int fontSizeReset = 20;
+    const char *tDead = "YOU DIED!";
+    const char *tReset = "Start/<R> to Reset!";
+    int wDead = MeasureText( tDead, fontSizeDead );
+    int wReset = MeasureText( tReset, fontSizeReset );
+    DrawText( tDead, GetScreenWidth() / 2 - wDead / 2, GetScreenHeight() / 2 - fontSizeDead / 2 - 10, fontSizeDead, RED );
+    DrawText( tReset, GetScreenWidth() / 2 - wReset / 2, GetScreenHeight() / 2 - fontSizeReset / 2 + 30, fontSizeReset, RED );
+}
+
+void processMapFile( const char *filePath, GameWorld *gw ) {
+
+    char *data = LoadFileText( filePath );
+    float blockSize = 2.0f;
+    int line = 0;
+    int column = 0;
+
+    Color wallColor = Fade( DARKGREEN, 0.5f );
+    Color obstacleColor = LIME;
+
+    char intBuffer[20];
+    int bufferPos = 0;
+
+    char parsedData[3][20];
+    int parsedDataLimit = 3;
+    int parsedDataPos = 0;
+
+    int playerLine = 0;
+    int playerColumn = 0;
+
+    while ( *data != '\0' ) {
+
+        char c = *data;
+
+        if ( c == '\n' ) {
+            line++;
+            column = 0;
+            intBuffer[bufferPos] = '\0';
+            if ( bufferPos > 0 ) {
+                if ( parsedDataPos < parsedDataLimit ) {
+                    strcpy( parsedData[parsedDataPos++], intBuffer );
+                }
+            }
+            bufferPos = 0;
+        } else {
+
+            if ( isdigit( c ) ) {
+                intBuffer[bufferPos++] = c;
+            } else {
+
+                intBuffer[bufferPos] = '\0';
+                if ( bufferPos > 0 ) {
+                    if ( parsedDataPos < parsedDataLimit ) {
+                        strcpy( parsedData[parsedDataPos++], intBuffer );
+                    }
+                }
+                intBuffer[0] = '\0';
+                bufferPos = 0;
+
+                switch ( c ) {
+                    case 'P':
+                        playerLine = line;
+                        playerColumn = column;
+                        break;
+                }
+
+            }
+
+            column++;
+
+        }
+
+        data++;
+
+    }
+
+    int groundLines = atoi( parsedData[0] );
+    int groundColumns = atoi( parsedData[1] );
+    int wallHeight = atoi( parsedData[2] );
+
+    gw->ground = createGround( 2.0f, groundLines, groundColumns );
+    createWalls( gw, wallColor, groundLines, groundColumns, wallHeight );
+
+    /*gw->player = createPlayer( (Vector3){
+        .x = 0.0f,
+        .y = 1.0f,
+        .z = -1.0f
+    });*/
+
+    TraceLog( LOG_INFO, "%d", playerColumn );
+
+    gw->player = createPlayer( (Vector3){
+        .x = -groundColumns + playerColumn,
+        .y = 1.0f,
+        .z = -(groundLines-1) + playerLine - 3
+    });
 
 }
