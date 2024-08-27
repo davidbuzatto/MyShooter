@@ -13,12 +13,8 @@ void updateEnemyCollisionProbes( Enemy *enemy );
 void jumpEnemy( Enemy *enemy );
 EnemyCollisionType checkCollisionEnemyBlock( Enemy *enemy, Block *block, bool checkCollisionProbes );
 BoundingBox getEnemyBoundingBox( Enemy *enemy );
-void createEnemyModel( Enemy *enemy );
-void destroyEnemyModel( Enemy *enemy );
-
 void createEnemies( GameWorld *gw, Color color, Color eyeColor ) ;
 void createEnemiesModel( Enemy *enemies, int enemyQuantity );
-void destroyEnemiesModel( Enemy *enemies, int enemyQuantity );
 void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines );
 
 void cleanDeadEnemies( GameWorld *gw );

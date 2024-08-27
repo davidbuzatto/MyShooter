@@ -6,12 +6,13 @@
 #include "GameWorld.h"
 #include "PowerUp.h"
 #include "Block.h"
+#include "ResourceManager.h"
 #include "raylib.h"
 
 PowerUp createPowerUp( Vector3 pos, PowerUpType powerUpType ) {
 
     PowerUp powerUp = {
-        .id = powerUpCount++,
+        .id = powerUpIdCount++,
         .pos = pos,
         .lastPos = {
             .x = 0.0f,
@@ -29,7 +30,6 @@ PowerUp createPowerUp( Vector3 pos, PowerUpType powerUpType ) {
         .ammoColor = GRAY,
         .showWiresOnly = false,
 
-        .mesh = { 0 },
         .model = { 0 },
         .rotationAxis = { 0.0f, 1.0f, 0.0f },
         .rotationHorizontalAngle = 0.0f,
@@ -123,24 +123,6 @@ BoundingBox getPowerUpBoundingBox( PowerUp *powerUp ) {
     };
 }
 
-void createPowerUpModel( PowerUp *powerUp ) {
-
-    powerUp->mesh = GenMeshSphere( powerUp->radius, 10, 10 );
-    powerUp->model = LoadModelFromMesh( powerUp->mesh );
-
-    Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
-
-    powerUp->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-
-}
-
-void destroyPowerUpModel( PowerUp *powerUp ) {
-    UnloadTexture( powerUp->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( powerUp->model );
-}
-
 void createPowerUps( GameWorld *gw ) {
 
     gw->powerUpQuantity = 22;
@@ -214,27 +196,28 @@ void createPowerUps( GameWorld *gw ) {
 
 void createPowerUpsModel( PowerUp *powerUps, int powerUpQuantity ) {
 
-    PowerUp *basePowerUp = &powerUps[0];
+    if ( !rm.powerUpModelCreated ) {
 
-    Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
+        PowerUp *basePowerUp = &powerUps[0];
 
-    basePowerUp->mesh = GenMeshSphere( basePowerUp->radius, 10, 10 );
-    basePowerUp->model = LoadModelFromMesh( basePowerUp->mesh );
-    basePowerUp->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        Mesh mesh = GenMeshSphere( basePowerUp->radius, 10, 10 );
+        Model model = LoadModelFromMesh( mesh );
 
-    for ( int i = 1; i < powerUpQuantity; i++ ) {
-        powerUps[i].mesh = basePowerUp->mesh;
-        powerUps[i].model = basePowerUp->model;
+        Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
+
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+
+        rm.powerUpModel = model;
+        rm.powerUpModelCreated = true;
+
     }
 
-}
+    for ( int i = 0; i < powerUpQuantity; i++ ) {
+        powerUps[i].model = rm.powerUpModel;
+    }
 
-void destroyPowerUpsModel( PowerUp *powerUps, int powerUpQuantity ) {
-    PowerUp *basePowerUp = &powerUps[0];
-    UnloadTexture( basePowerUp->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( basePowerUp->model );
 }
 
 void cleanConsumedPowerUps( GameWorld *gw ) {

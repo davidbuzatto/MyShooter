@@ -7,12 +7,28 @@
  */
 #pragma once
 
+#include <stdlib.h>
+
 #include "raylib.h"
 
 typedef struct ResourceManager {
-    Texture2D textureExample;
+
+    Model playerModel;
+    Model powerUpModel;
+    Model enemyModel;
+    Model obstacleModel;
+    Model groundModel;
+
+    bool playerModelCreated;
+    bool powerUpModelCreated;
+    bool enemyModelCreated;
+    bool obstacleModelCreated; // ok
+    bool groundModelCreated;   //ok
+
+    /*Texture2D textureExample;
     Sound soundExample;
-    Music musicExample;
+    Music musicExample;*/
+
 } ResourceManager;
 
 /**
@@ -30,3 +46,5 @@ void loadResourcesResourceManager( void );
  * @brief Unload global game resources.
  */
 void unloadResourcesResourceManager( void );
+
+void unloadModelsResourceManager( void );

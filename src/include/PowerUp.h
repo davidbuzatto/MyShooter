@@ -9,10 +9,6 @@ void updatePowerUp( PowerUp *powerUp, float delta );
 void jumpPowerUp( PowerUp *powerUp );
 PowerUpCollisionType checkCollisionPowerUpBlock( PowerUp *powerUp, Block *block );
 BoundingBox getPowerUpBoundingBox( PowerUp *powerUp );
-void createPowerUpModel( PowerUp *powerUp );
-void destroyPowerUpModel( PowerUp *powerUp );
 void createPowerUps( GameWorld *gw );
 void createPowerUpsModel( PowerUp *powerUps, int powerUpQuantity );
-void destroyPowerUpsModel( PowerUp *powerUps, int powerUpQuantity );
-
 void cleanConsumedPowerUps( GameWorld *gw );

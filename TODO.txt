@@ -1,10 +1,8 @@
+- Terminar mapa
 - Resolver tunelamento dos tiros (raycast);
 - Ajustar movimentação com o mouse e teclas;
 -   Modo primeira pessoa englobar tanto mouse quanto teclado ao invés de dois modos distintos;
 -   Modo terceira pessoa geral;
-- Melhorar criação e destruição de modelos;
--   Criar de forma global os modelos necessários e atribuir na criação;
--   Destruição desassociada das entidades;
 - Para a visão em terceira pessoa (aka Dark Souls, Lies of P etc.) a câmera
   deve ser posicionada atrás baseada em um ângulo e mirar em 180 do centro
   do personagem (insight apenas);

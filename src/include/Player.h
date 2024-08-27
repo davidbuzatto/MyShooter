@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "Types.h"
+#include "ResourceManager.h"
 #include "raylib.h"
 
 Player createPlayer( Vector3 pos );
@@ -16,7 +17,6 @@ PlayerCollisionType checkCollisionPlayerEnemy( Player *player, Enemy *enemy, boo
 PlayerCollisionType checkCollisionPlayerPowerUp( Player *player, PowerUp *powerUp );
 BoundingBox getPlayerBoundingBox( Player *player );
 void createPlayerModel( Player *player );
-void destroyPlayerModel( Player *player );
 
 void playerShotBullet( Player *player );
 void cleanCollidedBullets( Player *player );

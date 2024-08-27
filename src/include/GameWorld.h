@@ -11,12 +11,12 @@
 #include "raylib.h"
 
 extern const float GRAVITY;
-extern const int CAMERA_TYPE_QUANTITY;
 
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
  */
 GameWorld* createGameWorld( void );
+void configureGameWorld( GameWorld *gw );
 
 /**
  * @brief Destroys a GameWindow object and its dependecies.
@@ -39,13 +39,11 @@ void updateCameraTarget( GameWorld *gw, Player *player );
 void updateCameraPosition( GameWorld *gw, Player *player, float xOffset, float yOffset, float zOffset );
 void showCameraInfo( Camera3D *camera, int x, int y );
 
-Block createGround( float blockSize, int lines, int columns );
-void createGroundModel( Block *ground );
-void destroyGroundModel( Block *ground );
-
+Block createGround( float thickness, int lines, int columns );
 void createObstacles( GameWorld *gw, float blockSize, Color obstacleColor );
+
+void createGroundModel( Block *ground );
 void createObstaclesModel( Block *obstacles, int obstaclesQuantity );
-void destroyObstaclesModel( Block *obstacles, int obstaclesQuantity );
 
 void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight );
 
@@ -68,4 +66,4 @@ void resetGameWorld( GameWorld *gw );
 void drawDebugInfo( GameWorld *gw );
 void drawGameoverOverlay( void );
 
-void processMapFile( const char *filePath, GameWorld *gw );
+void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );

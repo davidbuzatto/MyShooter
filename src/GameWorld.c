@@ -25,91 +25,85 @@
 //#include "raygui.h"              // other compilation units must only include
 //#undef RAYGUI_IMPLEMENTATION     // raygui.h
 
+// extern from GameWorld.h
 const float GRAVITY = 50.0f;
+
+// id generation - extern from Types.h
+int bulletIdCount = 0;
+int enemyIdCount = 0;
+int powerUpIdCount = 0;
+
+const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 4;
-const bool CREATE_OBSTACLES = true;
-const bool CREATE_ENEMIES = true;
-const bool CREATE_POWER_UPS = true;
-const int gamepadId = 0;
+const float FIRST_PERSON_CAMERA_TARGET_DIST = 10.0f;
 
-int bulletCount = 0;
-int enemyCount = 0;
-int powerUpCount = 0;
+const bool LOAD_MAP = true;
+const bool LOAD_TEST_MAP = false;
 
+//const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
+const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
+//const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
+const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
+
+// globals
 bool showDebugInfo = true;
 bool drawWalls = true;
 
-float xCam = 0.0f;
-float yCam = 25.0f;
-float zCam = 30.0f;
-
-Color enemyColor;
-Color enemyEyeColor;
-
-/*float xCam = 0.0f;
-float yCam = 9.0f;
-float zCam = 7.4f;*/
-
-float firstPersonCameraTargetDist = 10.0f;
+float xCam;
+float yCam;
+float zCam;
 
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
  */
 GameWorld* createGameWorld( void ) {
+    GameWorld *gw = (GameWorld*) calloc( 1, sizeof( GameWorld ) );
+    configureGameWorld( gw );
+    return gw;
+}
+
+void configureGameWorld( GameWorld *gw ) {
 
     float blockSize = 2.0f;
-    int lines = 10;
-    int columns = 50;
-
-    GameWorld *gw = (GameWorld*) malloc( sizeof( GameWorld ) );
+    int lines = 20;
+    int columns = 100;
+    
     Color wallColor = Fade( DARKGREEN, 0.5f );
     Color obstacleColor = LIME;
+    Color enemyColor = RED;
+    Color enemyEyeColor = (Color){ 38, 0, 82, 255 };
 
-    enemyColor = RED;
-    enemyEyeColor = (Color){ 38, 0, 82, 255 };
+    xCam = 0.0f;
+    yCam = 25.0f;
+    zCam = 30.0f;
+
     gw->previousMousePos = (Vector2){0};
 
-    /*processMapFile( "resources/maps/map1.txt", gw );
+    if ( LOAD_MAP ) {
+        processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
+    } else {
 
-    gw->enemyQuantity = 0;
-    gw->powerUpQuantity = 0;
-    gw->obstacleQuantity = 0;*/
+        gw->player = createPlayer( (Vector3){
+            .x = -1.0f,
+            .y = 1.0f,
+            .z = -1.0f
+        });
 
-    gw->player = createPlayer( (Vector3){
-        .x = 0.0f,
-        .y = 1.0f,
-        .z = -1.0f
-    });
-    gw->ground = createGround( blockSize, lines, columns );
-    createWalls( gw, wallColor, lines, columns, 10 );
+        gw->ground = createGround( 2.0f, lines, columns );
+        createWalls( gw, wallColor, lines, columns, 10 );
 
-    if ( CREATE_ENEMIES ) {
         createEnemies( gw, enemyColor, enemyEyeColor );
-    } else {
-        gw->enemyQuantity = 0;
-    }
-
-    if ( CREATE_POWER_UPS ) {
         createPowerUps( gw );
-    } else {
-        gw->powerUpQuantity = 0;
-    }
-
-    if ( CREATE_OBSTACLES ) {
         createObstacles( gw, blockSize, obstacleColor );
-    } else {
-        gw->obstacleQuantity = 0;
+
     }
 
-    //gw->cameraType = CAMERA_TYPE_THIRD_PERSON_FIXED;
-    gw->cameraType = CAMERA_TYPE_FIRST_PERSON;
+    gw->cameraType = DEFAULT_CAMERA_TYPE;
     setupCamera( gw );
     updateCameraTarget( gw, &gw->player );
     updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
 
-    gw->playerInputType = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
-
-    return gw;
+    gw->playerInputType = DEFAULT_INPUT_TYPE;
 
 }
 
@@ -117,13 +111,8 @@ GameWorld* createGameWorld( void ) {
  * @brief Destroys a GameWindow object and its dependecies.
  */
 void destroyGameWorld( GameWorld *gw ) {
-    destroyPlayerModel( &gw->player );
-    destroyEnemiesModel( gw->enemies, gw->enemyQuantity );
     free( gw->enemies );
-    destroyPowerUpsModel( gw->powerUps, gw->powerUpQuantity );
     free( gw->powerUps );
-    destroyGroundModel( &gw->ground );
-    destroyObstaclesModel( gw->obstacles, gw->obstacleQuantity );
     free( gw->obstacles );
     free( gw );
 }
@@ -298,9 +287,9 @@ void updateCameraTarget( GameWorld *gw, Player *player ) {
             break;
         case CAMERA_TYPE_FIRST_PERSON:
         case CAMERA_TYPE_FIRST_PERSON_MOUSE:
-            gw->camera.target.x = player->pos.x + cosH * firstPersonCameraTargetDist;
-            gw->camera.target.y = player->pos.y + cosV * firstPersonCameraTargetDist;
-            gw->camera.target.z = player->pos.z + sinH * firstPersonCameraTargetDist;
+            gw->camera.target.x = player->pos.x + cosH * FIRST_PERSON_CAMERA_TARGET_DIST;
+            gw->camera.target.y = player->pos.y + cosV * FIRST_PERSON_CAMERA_TARGET_DIST;
+            gw->camera.target.z = player->pos.z + sinH * FIRST_PERSON_CAMERA_TARGET_DIST;
             break;
     }
 
@@ -340,7 +329,7 @@ void showCameraInfo( Camera3D *camera, int x, int y ) {
 
 }
 
-Block createGround( float blockSize, int lines, int columns ) {
+Block createGround( float thickness, int lines, int columns ) {
 
     Block ground = {
         .pos = {
@@ -349,9 +338,9 @@ Block createGround( float blockSize, int lines, int columns ) {
             .z = -1.0f
         },
         .dim = {
-            .x = columns * blockSize, 
-            .y = blockSize,
-            .z = lines * blockSize
+            .x = columns, 
+            .y = thickness,
+            .z = lines
         },
         .color = ORANGE,
         .tintColor = WHITE,
@@ -364,25 +353,6 @@ Block createGround( float blockSize, int lines, int columns ) {
 
     return ground;
 
-}
-
-void createGroundModel( Block *ground ) {
-
-    ground->renderModel = true;
-    ground->mesh = GenMeshCube( ground->dim.x, ground->dim.y, ground->dim.z );
-    ground->model = LoadModelFromMesh( ground->mesh );
-
-    Image img = GenImageChecked( ground->dim.x, ground->dim.z, 2, 2, ORANGE, (Color){ 192, 96, 0, 255 } );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
-
-    ground->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-
-}
-
-void destroyGroundModel( Block *ground ) {
-    UnloadTexture( ground->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( ground->model );
 }
 
 void createObstacles( GameWorld *gw, float blockSize, Color obstacleColor ) {
@@ -457,45 +427,67 @@ void createObstacles( GameWorld *gw, float blockSize, Color obstacleColor ) {
 
 }
 
-void createObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
+void createGroundModel( Block *ground ) {
 
-    Block *baseObstacle = &obstacles[0];
+    if ( !rm.groundModelCreated ) {
 
-    Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
+        Mesh mesh = GenMeshCube( ground->dim.x, ground->dim.y, ground->dim.z );
+        Model model = LoadModelFromMesh( mesh );
 
-    baseObstacle->renderModel = true;
-    baseObstacle->mesh = GenMeshCube( baseObstacle->dim.x, baseObstacle->dim.y, baseObstacle->dim.z );
-    baseObstacle->model = LoadModelFromMesh( baseObstacle->mesh );
-    baseObstacle->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        Image img = GenImageChecked( ground->dim.x, ground->dim.z, 2, 2, ORANGE, (Color){ 192, 96, 0, 255 } );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
 
-    for ( int i = 1; i < obstaclesQuantity; i++ ) {
-        obstacles[i].renderModel = true;
-        obstacles[i].mesh = baseObstacle->mesh;
-        obstacles[i].model = baseObstacle->model;
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        rm.groundModel = model;
+        rm.groundModelCreated = true;
+
     }
+
+    ground->renderModel = true;
+    ground->model = rm.groundModel;
 
 }
 
-void destroyObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
-    Block *baseObstacle = &obstacles[0];
-    UnloadTexture( baseObstacle->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( baseObstacle->model );
+void createObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
+
+    if ( !rm.obstacleModelCreated ) {
+
+        Block *baseObstacle = &obstacles[0];
+
+        Mesh mesh = GenMeshCube( baseObstacle->dim.x, baseObstacle->dim.y, baseObstacle->dim.z );
+        Model model = LoadModelFromMesh( mesh );
+
+        Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
+
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+
+        rm.obstacleModel = model;
+        rm.obstacleModelCreated = true;
+
+    }
+
+    for ( int i = 0; i < obstaclesQuantity; i++ ) {
+        obstacles[i].renderModel = true;
+        obstacles[i].model = rm.obstacleModel;
+    }
+
 }
 
 void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight ) {
 
     gw->leftWall = (Block){
         .pos = {
-            .x = - ( groundColumns + 2 ),
+            .x = - ( groundColumns / 2 + 2 ),
             .y = wallHeight / 2,
             .z = -1.0f
         },
         .dim = {
             .x = 2.0f, 
             .y = wallHeight,
-            .z = groundLines * 2
+            .z = groundLines
         },
         .color = wallColor,
         .visible = true,
@@ -505,14 +497,14 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
 
     gw->rightWall = (Block){
         .pos = {
-            .x = groundColumns,
+            .x = groundColumns / 2,
             .y = wallHeight / 2,
             .z = -1.0f
         },
         .dim = {
             .x = 2.0f, 
             .y = wallHeight,
-            .z = groundLines * 2
+            .z = groundLines
         },
         .color = wallColor,
         .visible = true,
@@ -524,10 +516,10 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
         .pos = {
             .x = -1.0f,
             .y = wallHeight / 2,
-            .z = - ( groundLines + 2 )
+            .z = - ( groundLines / 2 + 2 )
         },
         .dim = {
-            .x = groundColumns * 2, 
+            .x = groundColumns, 
             .y = wallHeight,
             .z = 2.0f
         },
@@ -541,10 +533,10 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
         .pos = {
             .x = -1.0f,
             .y = wallHeight / 2,
-            .z = groundLines
+            .z = groundLines / 2
         },
         .dim = {
-            .x = groundColumns * 2, 
+            .x = groundColumns, 
             .y = wallHeight,
             .z = 2.0f
         },
@@ -581,7 +573,7 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
     }
 
     if ( IsKeyPressed( KEY_R ) || 
-         ( IsGamepadAvailable( gamepadId ) && IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) ) {
+         ( IsGamepadAvailable( GAMEPAD_ID ) && IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) ) {
         resetGameWorld( gw );
     }
 
@@ -663,16 +655,16 @@ void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float 
 
 void processPlayerInputByGamepad( Player *player, CameraType cameraType, float delta ) {
 
-    if ( IsGamepadAvailable( gamepadId ) ) {
+    if ( IsGamepadAvailable( GAMEPAD_ID ) ) {
 
         // standard
-        float gpxLeft = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_X );
-        float gpyLeft = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_LEFT_Y );
+        float gpxLeft = GetGamepadAxisMovement( GAMEPAD_ID, GAMEPAD_AXIS_LEFT_X );
+        float gpyLeft = GetGamepadAxisMovement( GAMEPAD_ID, GAMEPAD_AXIS_LEFT_Y );
 
-        float gpxRight = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_X );
-        float gpyRight = GetGamepadAxisMovement( gamepadId, GAMEPAD_AXIS_RIGHT_Y );
+        float gpxRight = GetGamepadAxisMovement( GAMEPAD_ID, GAMEPAD_AXIS_RIGHT_X );
+        float gpyRight = GetGamepadAxisMovement( GAMEPAD_ID, GAMEPAD_AXIS_RIGHT_Y );
 
-        if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_LEFT_THUMB ) ) {
+        if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_THUMB ) ) {
             player->speed = player->runningSpeed;
         }
 
@@ -698,13 +690,13 @@ void processPlayerInputByGamepad( Player *player, CameraType cameraType, float d
             player->vel.z = player->speed * zMultiplier;
         }
 
-        if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_RIGHT_FACE_DOWN ) ) {
+        if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_FACE_DOWN ) ) {
             jumpPlayer( player );
         }
 
-        if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
+        if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+            if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
                 playerShotBullet( player );
             }
         } else {
@@ -994,36 +986,11 @@ void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp ) {
 }
 
 void resetGameWorld( GameWorld *gw ) {
-
-    /*xCam = 0;
-    yCam = 25.0f;
-    zCam = 30.0f;
-
-    gw->previousMousePos = (Vector2){0};
-
-    destroyPlayerModel( &gw->player );
-    gw->player = createPlayer();
-    updatePlayerCollisionProbes( &gw->player );
-
-    destroyEnemiesModel( gw->enemies, gw->enemyQuantity );
     free( gw->enemies );
-    createEnemies( gw, enemyColor, enemyEyeColor );
-
-    destroyPowerUpsModel( gw->powerUps, gw->powerUpQuantity );
     free( gw->powerUps );
-    createPowerUps( gw );
-
-    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-        gw->obstacles[i].touchColor = gw->obstacles[i].color;
-    }
-    for ( int i = 0; i < gw->enemyQuantity; i++ ) {
-        gw->enemies[i].state = ENEMY_STATE_ALIVE;
-    }
-
-    gw->cameraType = CAMERA_TYPE_FIRST_PERSON;
-    updateCameraTarget( gw, &gw->player );
-    updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );*/
-
+    free( gw->obstacles );
+    unloadModelsResourceManager();
+    configureGameWorld( gw );
 }
 
 void drawDebugInfo( GameWorld *gw ) {
@@ -1048,15 +1015,12 @@ void drawGameoverOverlay( void ) {
     DrawText( tReset, GetScreenWidth() / 2 - wReset / 2, GetScreenHeight() / 2 - fontSizeReset / 2 + 30, fontSizeReset, RED );
 }
 
-void processMapFile( const char *filePath, GameWorld *gw ) {
+void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor ) {
 
     char *data = LoadFileText( filePath );
-    float blockSize = 2.0f;
     int line = 0;
     int column = 0;
-
-    Color wallColor = Fade( DARKGREEN, 0.5f );
-    Color obstacleColor = LIME;
+    int currentY = 0;
 
     char intBuffer[20];
     int bufferPos = 0;
@@ -1102,6 +1066,10 @@ void processMapFile( const char *filePath, GameWorld *gw ) {
                         playerLine = line;
                         playerColumn = column;
                         break;
+                    case 'Y':
+                        currentY++;
+                        line = 0;
+                        break;
                 }
 
             }
@@ -1121,18 +1089,13 @@ void processMapFile( const char *filePath, GameWorld *gw ) {
     gw->ground = createGround( 2.0f, groundLines, groundColumns );
     createWalls( gw, wallColor, groundLines, groundColumns, wallHeight );
 
-    /*gw->player = createPlayer( (Vector3){
-        .x = 0.0f,
-        .y = 1.0f,
-        .z = -1.0f
-    });*/
-
-    TraceLog( LOG_INFO, "%d", playerColumn );
+    float playerX = (float) (-groundColumns/2 + playerColumn - 1);
+    float playerZ = (float) (-(groundLines/2) + playerLine - 2);
 
     gw->player = createPlayer( (Vector3){
-        .x = -groundColumns + playerColumn,
-        .y = 1.0f,
-        .z = -(groundLines-1) + playerLine - 3
+        .x = playerX,
+        .y = (float) currentY,
+        .z = playerZ
     });
 
 }

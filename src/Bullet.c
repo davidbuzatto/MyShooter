@@ -12,7 +12,7 @@
 Bullet createBullet() {
 
     Bullet bullet = {
-        .id = bulletCount++,
+        .id = bulletIdCount++,
         .pos = {
             .x = 0.0f,
             .y = 1.0f,

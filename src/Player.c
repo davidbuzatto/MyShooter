@@ -10,6 +10,7 @@
 #include "PowerUp.h"
 #include "Enemy.h"
 #include "Player.h"
+#include "ResourceManager.h"
 #include "raylib.h"
 #include "utils.h"
 
@@ -46,7 +47,6 @@ Player createPlayer( Vector3 pos ) {
         .showWiresOnly = false,
         .showCollisionProbes = false,
 
-        .mesh = { 0 },
         .model = { 0 },
         .rotationAxis = { 0.0f, 1.0f, 0.0f },
         .rotationHorizontalAngle = 180.0f,
@@ -318,20 +318,24 @@ BoundingBox getPlayerBoundingBox( Player *player ) {
 
 void createPlayerModel( Player *player ) {
 
-    player->mesh = GenMeshCube( player->dim.x, player->dim.y, player->dim.z );
-    player->model = LoadModelFromMesh( player->mesh );
+    if ( !rm.playerModelCreated ) {
 
-    Image img = GenImageChecked( 2, 2, 1, 1, BLUE, DARKBLUE );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
+        Mesh mesh = GenMeshCube( player->dim.x, player->dim.y, player->dim.z );
+        Model model = LoadModelFromMesh( mesh );
 
-    player->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        Image img = GenImageChecked( 2, 2, 1, 1, BLUE, DARKBLUE );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
 
-}
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
-void destroyPlayerModel( Player *player ) {
-    UnloadTexture( player->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( player->model );
+        rm.playerModel = model;
+        rm.playerModelCreated = true;
+
+    }
+    
+    player->model = rm.playerModel;
+
 }
 
 void playerShotBullet( Player *player ) {

@@ -6,6 +6,7 @@
 #include "GameWorld.h"
 #include "Block.h"
 #include "Enemy.h"
+#include "ResourceManager.h"
 #include "raylib.h"
 
 Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
@@ -15,7 +16,7 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
     float enemyThickness = 2.0f;
 
     Enemy enemy = {
-        .id = enemyCount++,
+        .id = enemyIdCount++,
         .pos = pos,
         .lastPos = {
             .x = 0.0f,
@@ -39,7 +40,6 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
         .showWiresOnly = false,
         .showCollisionProbes = false,
 
-        .mesh = { 0 },
         .model = { 0 },
         .rotationAxis = { 0.0f, 1.0f, 0.0f },
         .rotationHorizontalAngle = 0.0f,
@@ -278,24 +278,6 @@ BoundingBox getEnemyBoundingBox( Enemy *enemy ) {
     };
 }
 
-void createEnemyModel( Enemy *enemy ) {
-
-    enemy->mesh = GenMeshCube( enemy->dim.x, enemy->dim.y, enemy->dim.z );
-    enemy->model = LoadModelFromMesh( enemy->mesh );
-
-    Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
-
-    enemy->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-
-}
-
-void destroyEnemyModel( Enemy *enemy ) {
-    UnloadTexture( enemy->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( enemy->model );
-}
-
 void createEnemies( GameWorld *gw, Color color, Color eyeColor ) {
 
     gw->enemyQuantity = 26;
@@ -350,27 +332,28 @@ void createEnemies( GameWorld *gw, Color color, Color eyeColor ) {
 
 void createEnemiesModel( Enemy *enemies, int enemyQuantity ) {
 
-    Enemy *baseEnemy = &enemies[0];
+    if ( !rm.enemyModelCreated ) {
 
-    Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
-    Texture2D texture = LoadTextureFromImage( img );
-    UnloadImage( img );
+        Enemy *baseEnemy = &enemies[0];
 
-    baseEnemy->mesh = GenMeshCube( baseEnemy->dim.x, baseEnemy->dim.y, baseEnemy->dim.z );
-    baseEnemy->model = LoadModelFromMesh( baseEnemy->mesh );
-    baseEnemy->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        Mesh mesh = GenMeshCube( baseEnemy->dim.x, baseEnemy->dim.y, baseEnemy->dim.z );
+        Model model = LoadModelFromMesh( mesh );
 
-    for ( int i = 1; i < enemyQuantity; i++ ) {
-        enemies[i].mesh = baseEnemy->mesh;
-        enemies[i].model = baseEnemy->model;
+        Image img = GenImageChecked( 2, 2, 1, 1, WHITE, LIGHTGRAY );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
+
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+
+        rm.enemyModel = model;
+        rm.enemyModelCreated = true;
+
     }
 
-}
+    for ( int i = 0; i < enemyQuantity; i++ ) {
+        enemies[i].model = rm.enemyModel;
+    }
 
-void destroyEnemiesModel( Enemy *enemies, int enemyQuantity ) {
-    Enemy *baseEnemy = &enemies[0];
-    UnloadTexture( baseEnemy->model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
-    UnloadModel( baseEnemy->model );
 }
 
 void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {

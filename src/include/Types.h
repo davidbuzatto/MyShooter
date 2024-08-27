@@ -84,6 +84,10 @@ typedef enum PowerUpState {
     POWER_UP_STATE_CONSUMED
 } PowerUpState;
 
+extern int bulletIdCount;
+extern int powerUpIdCount;
+extern int enemyIdCount;
+
 typedef struct Block {
 
     Vector3 pos;
@@ -93,46 +97,11 @@ typedef struct Block {
     Color touchColor;
     bool visible;
 
-    Mesh mesh;
     Model model;
     bool renderModel;
     bool renderTouchColor;
 
 } Block;
-
-extern int powerUpCount;
-
-typedef struct PowerUp {
-
-    int id;
-    
-    Vector3 pos;
-    Vector3 lastPos;
-    float radius;
-    Vector3 vel;
-
-    float jumpSpeed;
-
-    Color hpColor;
-    Color ammoColor;
-    
-    bool showWiresOnly;
-
-    Mesh mesh;
-    Model model;
-    Vector3 rotationAxis;
-    float rotationHorizontalAngle;
-    float rotationVel;
-    float rotationSpeed;
-    Vector3 scale;
-
-    PowerUpType type;
-    PowerUpState state;
-    PowerUpPositionState positionState;
-
-} PowerUp;
-
-extern int bulletCount;
 
 typedef struct Bullet {
 
@@ -169,7 +138,6 @@ typedef struct Player {
     bool showWiresOnly;
     bool showCollisionProbes;
 
-    Mesh mesh;
     Model model;
 
     Vector3 rotationAxis;
@@ -211,7 +179,34 @@ typedef struct Player {
 
 } Player;
 
-extern int enemyCount;
+typedef struct PowerUp {
+
+    int id;
+    
+    Vector3 pos;
+    Vector3 lastPos;
+    float radius;
+    Vector3 vel;
+
+    float jumpSpeed;
+
+    Color hpColor;
+    Color ammoColor;
+    
+    bool showWiresOnly;
+
+    Model model;
+    Vector3 rotationAxis;
+    float rotationHorizontalAngle;
+    float rotationVel;
+    float rotationSpeed;
+    Vector3 scale;
+
+    PowerUpType type;
+    PowerUpState state;
+    PowerUpPositionState positionState;
+
+} PowerUp;
 
 typedef struct Enemy {
 
@@ -230,7 +225,6 @@ typedef struct Enemy {
     bool showWiresOnly;
     bool showCollisionProbes;
 
-    Mesh mesh;
     Model model;
     Vector3 rotationAxis;
     float rotationHorizontalAngle;

@@ -25,7 +25,7 @@ int main( void ) {
         false,           // undecorated
         false,           // always on top
         false,           // always run
-        false,           // load resources
+        true,            // load resources
         false            // init audio
     );
 
