@@ -1090,7 +1090,7 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     createWalls( gw, wallColor, groundLines, groundColumns, wallHeight );
 
     float playerX = (float) (-groundColumns/2 + playerColumn - 1);
-    float playerZ = (float) (-(groundLines/2) + playerLine - 2);
+    float playerZ = (float) (-groundLines/2 + playerLine - 2);
 
     gw->player = createPlayer( (Vector3){
         .x = playerX,
