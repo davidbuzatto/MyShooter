@@ -40,7 +40,7 @@ void updateCameraPosition( GameWorld *gw, Player *player, float xOffset, float y
 void showCameraInfo( Camera3D *camera, int x, int y );
 
 Block createGround( float thickness, int lines, int columns );
-void createObstacles( GameWorld *gw, float blockSize, Color obstacleColor );
+void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, float blockSize, Color obstacleColor );
 
 void createGroundModel( Block *ground );
 void createObstaclesModel( Block *obstacles, int obstaclesQuantity );

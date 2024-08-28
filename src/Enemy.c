@@ -278,49 +278,10 @@ BoundingBox getEnemyBoundingBox( Enemy *enemy ) {
     };
 }
 
-void createEnemies( GameWorld *gw, Color color, Color eyeColor ) {
+void createEnemies( GameWorld *gw, Vector3 *positions, int enemyQuantity, Color color, Color eyeColor ) {
 
-    gw->enemyQuantity = 26;
+    gw->enemyQuantity = enemyQuantity;
     gw->enemies = (Enemy*) malloc( sizeof( Enemy ) * gw->enemyQuantity );
-
-    Vector3 positions[] = {
-
-        { -46, 1, -6 },
-        { -46, 1, 0 },
-        { -46, 1, 6 },
-
-        { -40, 1, -8 },
-        { -40, 1, -2 },
-        { -40, 1, 4 },
-
-        { -34, 1, -6 },
-        { -34, 1, 0 },
-        { -34, 1, 6 },
-
-        { -28, 1, -8 },
-        { -28, 1, -2 },
-        { -28, 1, 4 },
-
-        { -22, 1, -6 },
-        { -22, 1, 0 },
-        { -22, 1, 6 },
-
-        { -16, 1, -8 },
-        { -16, 1, -2 },
-        { -16, 1, 4 },
-
-        { -10, 7, 2 },
-        { -10, 7, -4 },
-
-        { 14, 7, -2 },
-        { 20, 7, 0 },
-
-        { 32, 3, 2 },
-        { 36, 5, 2 },
-        { 36, 7, -2 },
-        { 40, 9, -4 },
-
-    };
 
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
         gw->enemies[i] = createEnemy( positions[i], color, eyeColor );

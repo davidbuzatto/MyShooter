@@ -123,68 +123,10 @@ BoundingBox getPowerUpBoundingBox( PowerUp *powerUp ) {
     };
 }
 
-void createPowerUps( GameWorld *gw ) {
+void createPowerUps( GameWorld *gw, Vector3 *positions, PowerUpType *types, int powerUpQuantity ) {
 
-    gw->powerUpQuantity = 22;
+    gw->powerUpQuantity = powerUpQuantity;
     gw->powerUps = (PowerUp*) malloc( sizeof( PowerUp ) * gw->powerUpQuantity );
-
-    Vector3 positions[] = {
-        
-        { -6, 1, 8 },
-        { -2, 1, 8 },
-        { 2, 1, 8 },
-        { 6, 1, 8 },
-
-        { -4, 1, 6 },
-        { 0, 1, 6 },
-        { 4, 1, 6 },
-
-        { -6, 1, 4 },
-        { -2, 1, 4 },
-        { 2, 1, 4
-         },
-        { 6, 1, 4 },
-
-        { -6, 1, -10 },
-        { -2, 1, -10 },
-        { 2, 1, -10 },
-        { 6, 1, -10 },
-
-        { -4, 1, -8 },
-        { 0, 1, -8 },
-        { 4, 1, -8 },
-
-        { -6, 1, -6 },
-        { -2, 1, -6 },
-        { 2, 1, -6 },
-        { 6, 1, -6 }
-
-    };
-
-    PowerUpType types[] = {
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_HP,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-        POWER_UP_TYPE_AMMO,
-    };
 
     for ( int i = 0; i < gw->powerUpQuantity; i++ ) {
         gw->powerUps[i] = createPowerUp( positions[i], types[i] );
