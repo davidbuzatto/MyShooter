@@ -1,4 +1,4 @@
-- Terminar mapa
+- Iluminação?
 - Resolver tunelamento dos tiros (raycast);
 - Ajustar movimentação com o mouse e teclas;
 -   Modo primeira pessoa englobar tanto mouse quanto teclado ao invés de dois modos distintos;

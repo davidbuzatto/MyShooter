@@ -49,7 +49,7 @@ Player createPlayer( Vector3 pos ) {
 
         .model = { 0 },
         .rotationAxis = { 0.0f, 1.0f, 0.0f },
-        .rotationHorizontalAngle = 180.0f,
+        .rotationHorizontalAngle = 0.0f,
         .rotationVerticalAngle = 90.0f,
         .rotationVel = 0.0f,
         .rotationSpeed = 150.0f,
@@ -333,7 +333,7 @@ void createPlayerModel( Player *player ) {
         rm.playerModelCreated = true;
 
     }
-    
+
     player->model = rm.playerModel;
 
 }

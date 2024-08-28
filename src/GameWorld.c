@@ -37,16 +37,16 @@ const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 4;
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 10.0f;
 
-bool LOAD_TEST_MAP = false;
+bool loadTestMap = false;
 
-//const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
-const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
+const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
+//const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
 const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
 //const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
 
 // globals
 bool showDebugInfo = true;
-bool drawWalls = false;
+bool drawWalls = true;
 
 float xCam;
 float yCam;
@@ -65,7 +65,8 @@ void configureGameWorld( GameWorld *gw ) {
 
     float blockSize = 2.0f;
     
-    Color wallColor = Fade( DARKGREEN, 0.5f );
+    //Color wallColor = Fade( DARKGREEN, 0.5f );
+    Color wallColor = DARKBLUE;
     Color obstacleColor = LIME;
     Color enemyColor = RED;
     Color enemyEyeColor = (Color){ 38, 0, 82, 255 };
@@ -76,7 +77,7 @@ void configureGameWorld( GameWorld *gw ) {
 
     gw->previousMousePos = (Vector2){0};
 
-    if ( LOAD_TEST_MAP ) {
+    if ( loadTestMap ) {
         processMapFile( "resources/maps/testMap.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
     } else {
         processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
@@ -959,8 +960,8 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     char intBuffer[20];
     int bufferPos = 0;
 
-    char parsedData[3][20];
-    int parsedDataLimit = 3;
+    char parsedData[4][20];
+    int parsedDataLimit = 4;
     int parsedDataPos = 0;
 
     int playerLine = 0;
@@ -971,7 +972,7 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     int eCounter = 0;
     int pCounter = 0;
 
-    Vector3 obstaclePositions[100];
+    Vector3 obstaclePositions[1000];
     Vector3 enemyPositions[100];
     Vector3 powerUpPositions[100];
     PowerUpType powerUpTypes[100];
@@ -1048,6 +1049,7 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     int groundLines = atoi( parsedData[0] );
     int groundColumns = atoi( parsedData[1] );
     int wallHeight = atoi( parsedData[2] );
+    int playerStartAngle = atoi( parsedData[3] );
 
     gw->ground = createGround( 2.0f, groundLines, groundColumns );
     createWalls( gw, wallColor, groundLines, groundColumns, wallHeight );
@@ -1063,6 +1065,7 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
         .y = (float) playerY,
         .z = playerZ
     });
+    gw->player.rotationHorizontalAngle = playerStartAngle;
 
     for ( int i = 0; i < eCounter; i++ ) {
         enemyPositions[i].x += columnAdjust;

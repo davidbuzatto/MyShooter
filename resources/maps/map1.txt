@@ -1,45 +1,409 @@
-20x100x10
+100x100x10x135
 Y
 |---------------------------------------------------------------------------------------------------|
-|                                                                                                   |-10
-|                                                                                                   |-9
-|                                                                                                   |-8
-|                                                                                                   |-7
-|                                                                                                   |-6
-|                                                                                                   |-5
-|                                                                                                   |-4
-|                                                                                                   |-3
-|                                                                                                   |-2
-|                                                 P                                                 |-1
-|                                                                                                   | 0
-|                                                                                                   | 1
-|                                                                                                   | 2
-|                                                                                                   | 3
-|                                                                                                   | 4
-|                                                                                                   | 5
-|                                                                                                   | 6
-|                                                                                                   | 7
-|                                                                                                   | 8
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|          E           E                                                     E           E          |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                E           E                                         E           E                |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|          E           E                                                     E           E          |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                E           E                                         E           E                |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|          E           E                                                     E           E          |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                E           E                                         E           E                |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|          E           E                                                     E           E          |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|O O O O O O O O O O O O O O O O O O O O O O                 O O O O O O O O O O O O O O O O O O O O|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|        O   H       H                                   E           E                              |
+|                H                                             E                                    |
+|        O   H       H                                                                              |
+|                H                                       E           E                              |
+|        O   H       H                                                                              |
+|                H                                             E                                    |
+|        O   H       H                                   E           E                              |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|                              E           E                                   A       A   O        |
+|                                    E                                             A                |
+|                                                                              A       A   O        |
+|                              E           E                                       A                |
+|                                                                              A       A   O        |
+|                                    E                                             A                |
+|                              E           E                                   A       A   O        |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                P  |
+|                                                                                                   |
+|                                                                                                   |
 |---------------------------------------------------------------------------------------------------|
 Y
 |---------------------------------------------------------------------------------------------------|
-|                                                                                                   |-10
-|                                                                                                   |-9
-|                                                                                                   |-8
-|                                                                                                   |-7
-|                                                                                                   |-6
-|                                                                                                   |-5
-|                                                                                                   |-4
-|                                                                                                   |-3
-|                                                                                                   |-2
-|                                                                                                   |-1
-|                                                                                                   | 0
-|                                                                                                   | 1
-|                                                                                                   | 2
-|                                                                                                   | 3
-|                                                                                                   | 4
-|                                                                                                   | 5
-|                                                                                                   | 6
-|                                                                                                   | 7
-|                                                                                                   | 8
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|O O O O O O O O O O O O O O O O O O O O O O                 O O O O O O O O O O O O O O O O O O O O|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|---------------------------------------------------------------------------------------------------|
+Y
+|---------------------------------------------------------------------------------------------------|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O O O O O O O O O O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|                                          O                 O                                      |
+|                                                                                                   |
+|O O O O O O O O O O O O O O O O O O O O O O                 O O O O O O O O O O O O O O O O O O O O|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O                                                                                          |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|                                                                                          O        |
+|                                                                                                   |
+|        O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O        |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|---------------------------------------------------------------------------------------------------|
+Y
+|---------------------------------------------------------------------------------------------------|
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                              E         E                                          |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                   E                                               |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                              E         E                                          |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
+|                                                                                                   |
 |---------------------------------------------------------------------------------------------------|
