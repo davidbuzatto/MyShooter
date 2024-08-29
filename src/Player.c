@@ -51,7 +51,8 @@ Player createPlayer( Vector3 pos ) {
         .rotationAxis = { 0.0f, 1.0f, 0.0f },
         .rotationHorizontalAngle = 0.0f,
         .rotationVerticalAngle = 90.0f,
-        .rotationVel = 0.0f,
+        .rotationHVel = 0.0f,
+        .rotationVVel = 0.0f,
         .rotationSpeed = 150.0f,
         .scale = { 1.0f, 1.0f, 1.0f },
 
@@ -162,7 +163,14 @@ void updatePlayer( Player *player, float delta ) {
 
     player->vel.y -= GRAVITY * delta;
 
-    player->rotationHorizontalAngle += player->rotationVel * delta;
+    player->rotationHorizontalAngle += player->rotationHVel * delta;
+    player->rotationVerticalAngle += player->rotationVVel * delta;
+
+    if ( player->rotationVerticalAngle < 0.0f ) {
+        player->rotationVerticalAngle = 0.0f;
+    } else if ( player->rotationVerticalAngle > 180.0f ) {
+        player->rotationVerticalAngle = 180.0f;
+    }
 
     if ( player->pos.y < player->lastPos.y ) {
         player->positionState = PLAYER_POSITION_STATE_FALLING;

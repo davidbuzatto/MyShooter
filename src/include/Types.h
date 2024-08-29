@@ -9,8 +9,7 @@ typedef enum GameWorldPlayerInputType {
 
 typedef enum CameraType {
     CAMERA_TYPE_THIRD_PERSON_FIXED,
-    CAMERA_TYPE_FIRST_PERSON,
-    CAMERA_TYPE_FIRST_PERSON_MOUSE
+    CAMERA_TYPE_FIRST_PERSON
 } CameraType;
 
 typedef enum EnemyCollisionType {
@@ -143,7 +142,8 @@ typedef struct Player {
     Vector3 rotationAxis;
     float rotationHorizontalAngle;
     float rotationVerticalAngle;
-    float rotationVel;
+    float rotationHVel;
+    float rotationVVel;
     float rotationSpeed;
     Vector3 scale;
 
@@ -263,7 +263,6 @@ typedef struct GameWorld {
 
     Camera3D camera;
     CameraType cameraType;
-    Vector2 previousMousePos;
     
     Player player;
 

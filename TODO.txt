@@ -1,8 +1,9 @@
-- Iluminação?
 - Resolver tunelamento dos tiros (raycast);
+- Iluminação?
 - Ajustar movimentação com o mouse e teclas;
--   Modo primeira pessoa englobar tanto mouse quanto teclado ao invés de dois modos distintos;
--   Modo terceira pessoa geral;
+  - Modo terceira pessoa geral:
+    - Usando gamepad:
+      - Ajustar movimentação da câmera e baseado na mesma, ajustar a movimentação do jogador
 - Para a visão em terceira pessoa (aka Dark Souls, Lies of P etc.) a câmera
   deve ser posicionada atrás baseada em um ângulo e mirar em 180 do centro
   do personagem (insight apenas);
