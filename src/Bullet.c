@@ -12,7 +12,7 @@
 Bullet createBullet() {
 
     Bullet bullet = {
-        .id = bulletIdCount++,
+        .id = objectIdCounter++,
         .pos = {
             .x = 0.0f,
             .y = 1.0f,
@@ -43,7 +43,7 @@ void updateBullet( Bullet *bullet, float delta ) {
     bullet->pos.x += bullet->vel.x * delta;
     bullet->pos.y += bullet->vel.y * delta;
     bullet->pos.z += bullet->vel.z * delta;
-    bullet->vel.y -= GRAVITY * delta;
+    //bullet->vel.y -= GRAVITY * delta;
 }
 
 BoundingBox getBulletBoundingBox( Bullet *bullet ) {

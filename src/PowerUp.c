@@ -12,7 +12,7 @@
 PowerUp createPowerUp( Vector3 pos, PowerUpType powerUpType ) {
 
     PowerUp powerUp = {
-        .id = powerUpIdCount++,
+        .id = objectIdCounter++,
         .pos = pos,
         .lastPos = {
             .x = 0.0f,

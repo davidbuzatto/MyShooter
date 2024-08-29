@@ -18,8 +18,9 @@ PlayerCollisionType checkCollisionPlayerPowerUp( Player *player, PowerUp *powerU
 BoundingBox getPlayerBoundingBox( Player *player );
 void createPlayerModel( Player *player );
 
-void playerShotBullet( Player *player );
+void playerShotBullet( GameWorld *gw,Player *player );
 void cleanCollidedBullets( Player *player );
 
 void playerAcquirePowerUp( Player *player, PowerUp *powerUp );
 Ray getPlayerToEnemyRay( Player *player, Enemy *enemy );
+Ray getPlayerToVector3Ray( Player *player, Vector3 v3 );

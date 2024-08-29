@@ -32,7 +32,7 @@ void inputAndUpdateGameWorld( GameWorld *gw );
  * @brief Draws the state of the game.
  */
 void drawGameWorld( GameWorld *gw );
-void drawReticle( CameraType cameraType, PlayerWeaponState weaponState, int reticleSize );
+void drawReticle( GameWorld *gw, CameraType cameraType, PlayerWeaponState weaponState, int reticleSize );
 
 void setupCamera( GameWorld *gw );
 void updateCameraTarget( GameWorld *gw, Player *player );
@@ -48,8 +48,8 @@ void createObstaclesModel( Block *obstacles, int obstaclesQuantity );
 void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight );
 
 void processOptionsInput( Player *player, GameWorld *gw );
-void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float delta );
-void processPlayerInputByGamepad( Player *player, CameraType cameraType, float delta );
+void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cameraType, float delta );
+void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType cameraType, float delta );
 
 void resolveCollisionPlayerObstacles( Player *player, GameWorld *gw );
 void resolveCollisionEnemyObstacles( Enemy *enemy, GameWorld *gw );
@@ -61,9 +61,11 @@ void resolveCollisionEnemyWalls( Enemy *enemy, Block *leftWall, Block *rightWall
 void resolveCollisionPlayerEnemy( Player *player, Enemy *enemy );
 void resolveCollisionBulletWorld( GameWorld *gw );
 void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp );
+int resolveHitsWorld( GameWorld *gw );
 
 void resetGameWorld( GameWorld *gw );
 void drawDebugInfo( GameWorld *gw );
 void drawGameoverOverlay( void );
 
 void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
+int compareRaycollision( const void *pr1, const void *pr2 );

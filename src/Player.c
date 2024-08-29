@@ -346,7 +346,7 @@ void createPlayerModel( Player *player ) {
 
 }
 
-void playerShotBullet( Player *player ) {
+void playerShotBullet( GameWorld *gw, Player *player ) {
     
     float delta = GetFrameTime();
     player->timeToNextShotCounter += delta;
@@ -370,6 +370,11 @@ void playerShotBullet( Player *player ) {
             b->vel.z = -sin( DEG2RAD * player->rotationHorizontalAngle ) * b->speed;
 
             player->bulletQuantity++;
+
+            int enemyId = resolveHitsWorld( gw );
+            if ( enemyId != 0 ) {
+                TraceLog( LOG_INFO, "%d", enemyId );
+            }
 
         }
 
@@ -464,4 +469,15 @@ Ray getPlayerToEnemyRay( Player *player, Enemy *enemy ) {
         }
     };
 
+}
+
+Ray getPlayerToVector3Ray( Player *player, Vector3 v3 ) {
+    return (Ray){
+        .position = player->pos,
+        .direction = {
+            .x = v3.x - player->pos.x,
+            .y = v3.y - player->pos.y,
+            .z = v3.z - player->pos.z
+        }
+    };
 }

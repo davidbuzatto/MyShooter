@@ -16,7 +16,7 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
     float enemyThickness = 2.0f;
 
     Enemy enemy = {
-        .id = enemyIdCount++,
+        .id = objectIdCounter++,
         .pos = pos,
         .lastPos = {
             .x = 0.0f,

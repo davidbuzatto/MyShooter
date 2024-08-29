@@ -83,9 +83,7 @@ typedef enum PowerUpState {
     POWER_UP_STATE_CONSUMED
 } PowerUpState;
 
-extern int bulletIdCount;
-extern int powerUpIdCount;
-extern int enemyIdCount;
+extern int objectIdCounter;
 
 typedef struct Block {
 
@@ -258,6 +256,11 @@ typedef struct Enemy {
     int damageOnContact;
 
 } Enemy;
+
+typedef struct IdentifiedRayCollision {
+    int enemyId;
+    RayCollision collision;
+} IdentifiedRayCollision;
 
 typedef struct GameWorld {
 

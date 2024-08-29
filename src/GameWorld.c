@@ -29,24 +29,25 @@
 const float GRAVITY = 50.0f;
 
 // id generation - extern from Types.h
-int bulletIdCount = 0;
-int enemyIdCount = 0;
-int powerUpIdCount = 0;
+int objectIdCounter = 1;
 
 const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 2;
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 10.0f;
 
-bool loadTestMap = false;
+bool loadTestMap = true;
 
 const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
 //const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
-//const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
-const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
+const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD;
+//const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
 
 // globals
 bool showDebugInfo = true;
 bool drawWalls = true;
+
+IdentifiedRayCollision hits[100];
+int hitCounter = 0;
 
 float xCam;
 float yCam;
@@ -68,6 +69,7 @@ void configureGameWorld( GameWorld *gw ) {
     //Color wallColor = Fade( DARKGREEN, 0.5f );
     Color wallColor = DARKBLUE;
     Color obstacleColor = LIME;
+    //Color obstacleColor = Fade( LIME, 0.8f );
     Color enemyColor = RED;
     Color enemyEyeColor = (Color){ 38, 0, 82, 255 };
 
@@ -120,9 +122,9 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
         Block *nearWall = &gw->nearWall;
 
         if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD ) {
-            processPlayerInputByKeyboard( player, gw->cameraType, delta );
+            processPlayerInputByKeyboard( gw, player, gw->cameraType, delta );
         } else if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ) {
-            processPlayerInputByGamepad( player, gw->cameraType, delta );
+            processPlayerInputByGamepad( gw, player, gw->cameraType, delta );
         }
         
         updatePlayer( player, delta );
@@ -203,12 +205,23 @@ void drawGameWorld( GameWorld *gw ) {
 
     EndMode3D();
 
+    if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {
+        for ( int i = 0; i < hitCounter; i++ ) {
+            Vector2 v = GetWorldToScreen( hits[i].collision.point, gw->camera );
+            if ( i == 0 ) {
+                DrawCircleV( v, 2, RED );
+            } else {
+                DrawCircleLinesV( v, hits[i].collision.distance * 10, WHITE );
+            }
+        }
+    }
+
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
         drawEnemyHpBar( &gw->enemies[i], gw->camera );
     }
 
     drawPlayerHud( &gw->player );
-    drawReticle( gw->cameraType, gw->player.weaponState, 30 );
+    drawReticle( gw, gw->cameraType, gw->player.weaponState, 30 );
 
     // debug info
     if ( showDebugInfo ) {
@@ -223,14 +236,15 @@ void drawGameWorld( GameWorld *gw ) {
 
 }
 
-void drawReticle( CameraType cameraType, PlayerWeaponState weaponState, int reticleSize ) {
+void drawReticle( GameWorld *gw, CameraType cameraType, PlayerWeaponState weaponState, int reticleSize ) {
 
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
-        int xCenter = GetScreenWidth() / 2;
-        int yCenter = GetScreenHeight() / 2;
+        //int x = GetScreenWidth() / 2;
+        //int y = GetScreenHeight() / 2;
+        Vector2 v = GetWorldToScreen( gw->camera.target, gw->camera );
         Color reticleColor = weaponState == PLAYER_WEAPON_STATE_READY ? RED : BLACK;
-        DrawLine( xCenter - reticleSize, yCenter, xCenter + reticleSize, yCenter, reticleColor );
-        DrawLine( xCenter, yCenter - reticleSize, xCenter, yCenter + reticleSize, reticleColor );
+        DrawLine( v.x - reticleSize, v.y, v.x + reticleSize, v.y, reticleColor );
+        DrawLine( v.x, v.y - reticleSize, v.x, v.y + reticleSize, reticleColor );
     }
 
 }
@@ -523,7 +537,7 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
 
 }
 
-void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float delta ) {
+void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cameraType, float delta ) {
 
     if ( cameraType == CAMERA_TYPE_THIRD_PERSON_FIXED ) {
         if ( IsKeyDown( KEY_UP ) ) {
@@ -586,14 +600,14 @@ void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float 
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
         if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( player );
+            playerShotBullet( gw, player );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
     } else {
         if ( IsKeyDown( KEY_LEFT_ALT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( player );
+            playerShotBullet( gw, player );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
@@ -601,7 +615,7 @@ void processPlayerInputByKeyboard( Player *player, CameraType cameraType, float 
 
 }
 
-void processPlayerInputByGamepad( Player *player, CameraType cameraType, float delta ) {
+void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType cameraType, float delta ) {
 
     if ( IsGamepadAvailable( GAMEPAD_ID ) ) {
 
@@ -640,7 +654,7 @@ void processPlayerInputByGamepad( Player *player, CameraType cameraType, float d
         if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
             if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                playerShotBullet( player );
+                playerShotBullet( gw, player );
             }
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
@@ -926,6 +940,66 @@ void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp ) {
         playerAcquirePowerUp( player, powerUp );
     }
     
+}
+
+// returns the identifier of the closest enemy or zero if the collisions
+// are not against enemies or there was no collision
+int resolveHitsWorld( GameWorld *gw ) {
+
+    Ray ray = getPlayerToVector3Ray( &gw->player, gw->camera.target );
+    hitCounter = 0;
+
+    Block *b[5] = {
+        &gw->ground,
+        &gw->leftWall,
+        &gw->rightWall,
+        &gw->farWall,
+        &gw->nearWall
+    };
+
+    for ( int i = 0; i < 5; i++ ) {
+        RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( b[i] ) );  
+        if ( rc.hit ) {
+            hits[hitCounter++] = (IdentifiedRayCollision) {
+                .enemyId = 0,
+                .collision = rc
+            };
+        }
+    }
+
+    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
+        RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles[i] ) );  
+        if ( rc.hit ) {
+            hits[hitCounter++] = (IdentifiedRayCollision) {
+                .enemyId = 0,
+                .collision = rc
+            };
+        }
+    }
+
+    for ( int i = 0; i < gw->enemyQuantity; i++ ) {
+        RayCollision rc = GetRayCollisionBox( ray, getEnemyBoundingBox( &gw->enemies[i] ) );  
+        if ( rc.hit ) {
+            hits[hitCounter++] = (IdentifiedRayCollision) {
+                .enemyId = gw->enemies[i].id,
+                .collision = rc
+            };
+        }
+    }
+
+    qsort( hits, hitCounter, sizeof( IdentifiedRayCollision ), compareRaycollision );
+    if ( hitCounter > 0 ) {
+        return hits[0].enemyId;
+    }
+
+    return 0;
+
+}
+
+int compareRaycollision( const void *pr1, const void *pr2 ) {
+    IdentifiedRayCollision *r1 = (IdentifiedRayCollision*) pr1;
+    IdentifiedRayCollision *r2 = (IdentifiedRayCollision*) pr2;
+    return r1->collision.distance - r2->collision.distance;
 }
 
 void resetGameWorld( GameWorld *gw ) {
