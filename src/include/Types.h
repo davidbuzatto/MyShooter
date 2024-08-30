@@ -83,9 +83,18 @@ typedef enum PowerUpState {
     POWER_UP_STATE_CONSUMED
 } PowerUpState;
 
-extern int objectIdCounter;
+typedef enum EntityType {
+    ENTITY_TYPE_NONE,
+    ENTITY_TYPE_BLOCK,
+    ENTITY_TYPE_OBSTACLE,
+    ENTITY_TYPE_ENEMY
+} EntityType;
+
+extern int entityIdCounter;
 
 typedef struct Block {
+
+    int id;
 
     Vector3 pos;
     Vector3 dim;
@@ -101,22 +110,11 @@ typedef struct Block {
 } Block;
 
 typedef struct Bullet {
-
     int id;
-
     Vector3 pos;
     float radius;
-    Vector3 vel;
-
-    float speed;
-
     Color color;
-
-    float horizontalAngle;
-    float verticalAngle;
-
     bool collided;
-
 } Bullet;
 
 typedef struct Player {
@@ -255,10 +253,18 @@ typedef struct Enemy {
 
     int damageOnContact;
 
+    Bullet collidedBullets[5];
+    int maxCollidedBullets;
+    int collidedBulletCount;
+    float collidedBulletsDistance[5];
+    float collidedBulletsHAngle[5];
+    float collidedBulletsVAngle[5];
+
 } Enemy;
 
 typedef struct IdentifiedRayCollision {
-    int enemyId;
+    int entityId;
+    EntityType entityType;
     RayCollision collision;
 } IdentifiedRayCollision;
 
@@ -284,6 +290,10 @@ typedef struct GameWorld {
     Block rightWall;
     Block farWall;
     Block nearWall;
+
+    Bullet collidedBullets[50];
+    int maxCollidedBullets;
+    int collidedBulletCount;
 
     GameWorldPlayerInputType playerInputType;
 

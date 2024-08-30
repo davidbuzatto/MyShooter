@@ -29,13 +29,13 @@
 const float GRAVITY = 50.0f;
 
 // id generation - extern from Types.h
-int objectIdCounter = 1;
+int entityIdCounter = 1;
 
 const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 2;
-const float FIRST_PERSON_CAMERA_TARGET_DIST = 10.0f;
+const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
-bool loadTestMap = true;
+bool loadTestMap = false;
 
 const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
 //const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
@@ -47,6 +47,7 @@ bool showDebugInfo = true;
 bool drawWalls = true;
 
 IdentifiedRayCollision hits[100];
+IdentifiedRayCollision currentHit = {0};
 int hitCounter = 0;
 
 float xCam;
@@ -76,6 +77,9 @@ void configureGameWorld( GameWorld *gw ) {
     xCam = 0.0f;
     yCam = 25.0f;
     zCam = 30.0f;
+
+    gw->maxCollidedBullets = 50;
+    gw->collidedBulletCount = 0;
 
     if ( loadTestMap ) {
         processMapFile( "resources/maps/testMap.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
@@ -159,10 +163,11 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
             setEnemyDetectedByPlayer( enemy, &gw->player, true );
         }
 
-        resolveCollisionBulletWorld( gw );
+        resolveBulletsOutOfBounds( gw );
 
         updateCameraTarget( gw, &gw->player );
         updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
+        currentHit = resolveHitsWorld( gw );
 
     }
 
@@ -180,12 +185,16 @@ void drawGameWorld( GameWorld *gw ) {
 
     //DrawGrid( 120, 1.0f );
 
+    int collidedBullets = gw->collidedBulletCount < gw->maxCollidedBullets ? gw->collidedBulletCount : gw->maxCollidedBullets;
+    for ( int i = 0; i < collidedBullets; i++ ) {
+        drawBullet( &gw->collidedBullets[i] );
+    }
+
     drawBlock( &gw->ground );
     drawPlayer( &gw->player );
     
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
         drawEnemy( &gw->enemies[i] );
-        //DrawRay( getPlayerToEnemyRay( &gw->player, &gw->enemies[i] ), BLACK );
     }
 
     for ( int i = 0; i < gw->powerUpQuantity; i++ ) {
@@ -204,17 +213,6 @@ void drawGameWorld( GameWorld *gw ) {
     }
 
     EndMode3D();
-
-    if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {
-        for ( int i = 0; i < hitCounter; i++ ) {
-            Vector2 v = GetWorldToScreen( hits[i].collision.point, gw->camera );
-            if ( i == 0 ) {
-                DrawCircleV( v, 2, RED );
-            } else {
-                DrawCircleLinesV( v, hits[i].collision.distance * 10, WHITE );
-            }
-        }
-    }
 
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
         drawEnemyHpBar( &gw->enemies[i], gw->camera );
@@ -239,12 +237,19 @@ void drawGameWorld( GameWorld *gw ) {
 void drawReticle( GameWorld *gw, CameraType cameraType, PlayerWeaponState weaponState, int reticleSize ) {
 
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
-        //int x = GetScreenWidth() / 2;
-        //int y = GetScreenHeight() / 2;
-        Vector2 v = GetWorldToScreen( gw->camera.target, gw->camera );
+
+        Vector2 v = {0};
+
+        if ( currentHit.entityType == ENTITY_TYPE_NONE ) {
+            v = GetWorldToScreen( gw->camera.target, gw->camera );
+        } else {
+            v = GetWorldToScreen( currentHit.collision.point, gw->camera );
+        }
+
         Color reticleColor = weaponState == PLAYER_WEAPON_STATE_READY ? RED : BLACK;
         DrawLine( v.x - reticleSize, v.y, v.x + reticleSize, v.y, reticleColor );
         DrawLine( v.x, v.y - reticleSize, v.x, v.y + reticleSize, reticleColor );
+
     }
 
 }
@@ -323,6 +328,7 @@ void showCameraInfo( Camera3D *camera, int x, int y ) {
 Block createGround( float thickness, int lines, int columns ) {
 
     Block ground = {
+        .id = entityIdCounter++,
         .pos = {
             .x = -1.0f,
             .y = -1.0f,
@@ -353,6 +359,7 @@ void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, f
 
     for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
         gw->obstacles[i] = (Block){
+            .id = entityIdCounter++,
             .pos = positions[i],
             .dim = { blockSize, blockSize, blockSize },
             .color = obstacleColor,
@@ -420,6 +427,7 @@ void createObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
 void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight ) {
 
     gw->leftWall = (Block){
+        .id = entityIdCounter++,
         .pos = {
             .x = - ( groundColumns / 2 + 2 ),
             .y = wallHeight / 2,
@@ -437,6 +445,7 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     };
 
     gw->rightWall = (Block){
+        .id = entityIdCounter++,
         .pos = {
             .x = groundColumns / 2,
             .y = wallHeight / 2,
@@ -454,6 +463,7 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     };
 
     gw->farWall = (Block){
+        .id = entityIdCounter++,
         .pos = {
             .x = -1.0f,
             .y = wallHeight / 2,
@@ -471,6 +481,7 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     };
 
     gw->nearWall = (Block){
+        .id = entityIdCounter++,
         .pos = {
             .x = -1.0f,
             .y = wallHeight / 2,
@@ -525,6 +536,11 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
 
     if ( IsKeyPressed( KEY_I ) ) {
         player->immortal = !player->immortal;
+    }
+
+    if ( IsKeyPressed( KEY_L ) ) {
+        loadTestMap = !loadTestMap;
+        resetGameWorld( gw );
     }
 
     if ( IsKeyPressed( KEY_K ) ) {
@@ -600,14 +616,14 @@ void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cam
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
         if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( gw, player );
+            playerShotBullet( gw, player, &currentHit );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
     } else {
         if ( IsKeyDown( KEY_LEFT_ALT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( gw, player );
+            playerShotBullet( gw, player, &currentHit );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
@@ -654,7 +670,7 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
         if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
             if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                playerShotBullet( gw, player );
+                playerShotBullet( gw, player, &currentHit );
             }
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
@@ -860,59 +876,13 @@ void resolveCollisionPlayerEnemy( Player *player, Enemy *enemy ) {
     
 }
 
-void resolveCollisionBulletWorld( GameWorld *gw ) {
+void resolveBulletsOutOfBounds( GameWorld *gw ) {
 
-    Block *ground = &gw->ground;
     Bullet *bullets = gw->player.bullets;
 
     for ( int i = 0; i < gw->player.bulletQuantity; i++ ) {
 
         Bullet *bullet = &bullets[i];
-
-        // scenario
-        if ( checkCollisionBulletBlock( bullet, ground ) || 
-             checkCollisionBulletBlock( bullet, &gw->leftWall ) ||
-             checkCollisionBulletBlock( bullet, &gw->rightWall ) ||
-             checkCollisionBulletBlock( bullet, &gw->farWall ) ||
-             checkCollisionBulletBlock( bullet, &gw->nearWall ) ) {
-            bullet->collided = true;
-        } else {
-            for ( int j = 0; j < gw->obstacleQuantity; j++ ) {
-                if ( checkCollisionBulletBlock( bullet, &gw->obstacles[j] ) ) {
-                    bullet->collided = true;
-                    break;
-                }
-            }
-        }
-
-        // enemies
-        if ( !bullet->collided ) {
-
-            for ( int j = 0; j < gw->enemyQuantity; j++ ) {
-
-                Enemy *enemy = &gw->enemies[j];
-
-                if ( enemy->state == ENEMY_STATE_ALIVE && 
-                     checkCollisionBulletEnemy( bullet, enemy ) ) {
-                    
-                    bullet->collided = true;
-
-                    if ( enemy->currentHp > 0 ) {
-                        enemy->currentHp--;
-                        enemy->showHpBar = true;
-                        if ( enemy->currentHp == 0 ) {
-                            enemy->state = ENEMY_STATE_DEAD;
-                            cleanDeadEnemies( gw );
-                        }
-                    }
-
-                    break;
-
-                }
-
-            }
-
-        }
 
         // out of bounds
         if ( !bullet->collided ) {
@@ -944,7 +914,7 @@ void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp ) {
 
 // returns the identifier of the closest enemy or zero if the collisions
 // are not against enemies or there was no collision
-int resolveHitsWorld( GameWorld *gw ) {
+IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
 
     Ray ray = getPlayerToVector3Ray( &gw->player, gw->camera.target );
     hitCounter = 0;
@@ -961,7 +931,8 @@ int resolveHitsWorld( GameWorld *gw ) {
         RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( b[i] ) );  
         if ( rc.hit ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
-                .enemyId = 0,
+                .entityId = b[i]->id,
+                .entityType = ENTITY_TYPE_BLOCK,
                 .collision = rc
             };
         }
@@ -971,7 +942,8 @@ int resolveHitsWorld( GameWorld *gw ) {
         RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles[i] ) );  
         if ( rc.hit ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
-                .enemyId = 0,
+                .entityId = gw->obstacles[i].id,
+                .entityType = ENTITY_TYPE_OBSTACLE,
                 .collision = rc
             };
         }
@@ -981,7 +953,8 @@ int resolveHitsWorld( GameWorld *gw ) {
         RayCollision rc = GetRayCollisionBox( ray, getEnemyBoundingBox( &gw->enemies[i] ) );  
         if ( rc.hit ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
-                .enemyId = gw->enemies[i].id,
+                .entityId = gw->enemies[i].id,
+                .entityType = ENTITY_TYPE_ENEMY,
                 .collision = rc
             };
         }
@@ -989,17 +962,22 @@ int resolveHitsWorld( GameWorld *gw ) {
 
     qsort( hits, hitCounter, sizeof( IdentifiedRayCollision ), compareRaycollision );
     if ( hitCounter > 0 ) {
-        return hits[0].enemyId;
+        return hits[0];
     }
 
-    return 0;
+    return (IdentifiedRayCollision){0};
 
 }
 
 int compareRaycollision( const void *pr1, const void *pr2 ) {
     IdentifiedRayCollision *r1 = (IdentifiedRayCollision*) pr1;
     IdentifiedRayCollision *r2 = (IdentifiedRayCollision*) pr2;
-    return r1->collision.distance - r2->collision.distance;
+    if ( r1->collision.distance < r2->collision.distance ) {
+        return -1;
+    } else if ( r1->collision.distance > r2->collision.distance ) {
+        return 1;
+    }
+    return 0;
 }
 
 void resetGameWorld( GameWorld *gw ) {
@@ -1011,6 +989,7 @@ void resetGameWorld( GameWorld *gw ) {
 }
 
 void drawDebugInfo( GameWorld *gw ) {
+
     DrawFPS( 10, 10 );
     DrawText( TextFormat( "player: x=%.1f, y=%.1f, z=%.1f", gw->player.pos.x, gw->player.pos.y, gw->player.pos.z ), 10, 30, 20, BLACK );
     DrawText( TextFormat( "active bullets: %d", gw->player.bulletQuantity ), 10, 50, 20, BLACK );
@@ -1018,6 +997,26 @@ void drawDebugInfo( GameWorld *gw ) {
     DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 90, 20, BLACK );
     DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 110, 20, BLACK );
     showCameraInfo( &gw->camera, 10, 130 );
+
+    // draw collision points (debug)
+    if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {
+
+        Color colors[] = { RED, WHITE, DARKPURPLE, GREEN, BLUE, YELLOW, ORANGE, DARKGRAY };
+
+        for ( int i = 0; i < hitCounter; i++ ) {
+
+            Vector2 v = GetWorldToScreen( hits[i].collision.point, gw->camera );
+            Color c = i < 8 ? colors[i] : BLACK;
+            float d = i == 0 ? 2 : hits[i].collision.distance * 100;
+            
+            DrawCircleLinesV( v, d, c );
+            DrawText( TextFormat( "%d", hits[i].entityId ), v.x + d + 10, v.y, 20, c );
+            DrawText( TextFormat( "%.2f", hits[i].collision.distance ), v.x, v.y + d + 10, 20, c );
+
+        }
+
+    }
+
 }
 
 void drawGameoverOverlay( void ) {

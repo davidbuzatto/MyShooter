@@ -121,10 +121,6 @@ void drawPlayer( Player *player ) {
 
     DrawModelWiresEx( player->model, player->pos, player->rotationAxis, player->rotationHorizontalAngle, player->scale, BLACK );
 
-    for ( int i = 0; i < player->bulletQuantity; i++ ) {
-        drawBullet( &player->bullets[i] );
-    }
-
 }
 
 void drawPlayerHud( Player *player ) {
@@ -178,10 +174,6 @@ void updatePlayer( Player *player, float delta ) {
         player->positionState = PLAYER_POSITION_STATE_JUMPING;
     } else {
         player->positionState = PLAYER_POSITION_STATE_ON_GROUND;
-    }
-
-    for ( int i = 0; i < player->bulletQuantity; i++ ) {
-        updateBullet( &player->bullets[i], delta );
     }
 
 }
@@ -346,7 +338,7 @@ void createPlayerModel( Player *player ) {
 
 }
 
-void playerShotBullet( GameWorld *gw, Player *player ) {
+void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *irc ) {
     
     float delta = GetFrameTime();
     player->timeToNextShotCounter += delta;
@@ -356,24 +348,65 @@ void playerShotBullet( GameWorld *gw, Player *player ) {
         player->timeToNextShotCounter = 0.0f;
 
         if ( player->bulletQuantity < player->maxBullets && player->currentAmmo > 0 ) {
+            
+            Enemy *enemyShot = NULL;
+            bool createBulletWorld = true;
 
             int q = player->bulletQuantity;
             player->currentAmmo--;
 
-            player->bullets[q] = createBullet();
+            player->bullets[q] = createBullet( (Vector3){0}, PINK );
             Bullet *b = &player->bullets[q];
 
             b->pos = player->pos;
-
-            b->vel.x = cos( DEG2RAD * player->rotationHorizontalAngle ) * b->speed;
-            b->vel.y = sin( DEG2RAD * ( player->rotationVerticalAngle + 90.0f )  ) * b->speed;
-            b->vel.z = -sin( DEG2RAD * player->rotationHorizontalAngle ) * b->speed;
-
             player->bulletQuantity++;
 
-            int enemyId = resolveHitsWorld( gw );
-            if ( enemyId != 0 ) {
-                TraceLog( LOG_INFO, "%d", enemyId );
+
+            for ( int j = 0; j < gw->enemyQuantity; j++ ) {
+
+                Enemy *enemy = &gw->enemies[j];
+
+                if ( enemy->state == ENEMY_STATE_ALIVE && 
+                    enemy->id == irc->entityId ) {
+                    
+                    enemy->currentHp--;
+                    enemy->showHpBar = true;
+                    enemyShot = enemy;
+
+                    if ( enemy->currentHp == 0 ) {
+                        enemy->state = ENEMY_STATE_DEAD;
+                        enemyShot = NULL;
+                        createBulletWorld = false;
+                        cleanDeadEnemies( gw );
+                    }
+
+                    break;
+
+                }
+
+            }
+
+            if ( irc->entityType != ENTITY_TYPE_NONE ) {
+
+                b->collided = true;
+                cleanCollidedBullets( player );
+
+                if ( enemyShot != NULL ) {
+                    addBulletToEnemy( enemyShot, irc->collision.point );
+                } else if ( createBulletWorld ) {
+                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, BLACK );
+                    gw->collidedBulletCount++;
+                }
+
+                /*char t = 0;
+                switch ( irc->entityType ) {
+                    case ENTITY_TYPE_BLOCK: t = 'b'; break;
+                    case ENTITY_TYPE_ENEMY: t = 'e'; break;
+                    case ENTITY_TYPE_OBSTACLE: t = 'o'; break;
+                    default: t = 'd'; break;
+                }
+                TraceLog( LOG_INFO, "%d %c", irc->entityId, t );*/
+
             }
 
         }

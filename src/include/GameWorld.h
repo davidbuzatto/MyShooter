@@ -59,9 +59,9 @@ void resolveCollisionPowerUpGround( PowerUp *powerUp, Block *ground );
 void resolveCollisionPlayerWalls( Player *player, Block *leftWall, Block *rightWall, Block *farWall, Block *nearWall );
 void resolveCollisionEnemyWalls( Enemy *enemy, Block *leftWall, Block *rightWall, Block *farWall, Block *nearWall );
 void resolveCollisionPlayerEnemy( Player *player, Enemy *enemy );
-void resolveCollisionBulletWorld( GameWorld *gw );
+void resolveBulletsOutOfBounds( GameWorld *gw );
 void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp );
-int resolveHitsWorld( GameWorld *gw );
+IdentifiedRayCollision resolveHitsWorld( GameWorld *gw );
 
 void resetGameWorld( GameWorld *gw );
 void drawDebugInfo( GameWorld *gw );

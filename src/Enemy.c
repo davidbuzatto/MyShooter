@@ -5,6 +5,7 @@
 #include "Types.h"
 #include "GameWorld.h"
 #include "Block.h"
+#include "Bullet.h"
 #include "Enemy.h"
 #include "ResourceManager.h"
 #include "raylib.h"
@@ -16,7 +17,7 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
     float enemyThickness = 2.0f;
 
     Enemy enemy = {
-        .id = objectIdCounter++,
+        .id = entityIdCounter++,
         .pos = pos,
         .lastPos = {
             .x = 0.0f,
@@ -67,7 +68,10 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
         .showHpBar = false,
         .timeShowingHpBar = 4.0f,
         .hpBarShowCounter = 0.0f,
-        .damageOnContact = 1
+        .damageOnContact = 1,
+
+        .maxCollidedBullets = 5,
+        .collidedBulletCount = 0
 
     };
 
@@ -128,6 +132,11 @@ void drawEnemy( Enemy *enemy ) {
 
     }
 
+    int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
+    for ( int i = 0; i < collidedBullets; i++ ) {
+        drawBullet( &enemy->collidedBullets[i] );
+    }
+
     DrawModelWiresEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, BLACK );
 
 }
@@ -179,6 +188,16 @@ void updateEnemy( Enemy *enemy, Player *player, float delta ) {
     }
 
     enemy->rotationHorizontalAngle = - ( RAD2DEG * atan2( enemy->pos.z - player->pos.z, enemy->pos.x - player->pos.x ) );
+
+    int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
+    for ( int i = 0; i < collidedBullets; i++ ) {
+        Bullet *b = &enemy->collidedBullets[i];
+        float h = enemy->rotationHorizontalAngle;
+        //b->pos.x = enemy->pos.x - cos( DEG2RAD * ( h - enemy->collidedBulletsHAngle[i] + 180 ) ) * enemy->collidedBulletsDistance[i];
+        //b->pos.z = enemy->pos.z + sin( DEG2RAD * ( enemy->collidedBulletsHAngle[i] - h -45 ) ) * enemy->collidedBulletsDistance[i];
+        //b->pos.y = enemy->pos.y - sin( DEG2RAD * ( enemy->collidedBulletsVAngle[i] ) ) * enemy->collidedBulletsDistance[i];
+        //b->pos.z = enemy->pos.z + sin( DEG2RAD * ( h - enemy->collidedBulletsHAngle[i] ) ) * enemy->collidedBulletsDistance[i];
+    }
 
 }
 
@@ -363,6 +382,25 @@ void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {
     };
 
     enemy->detectedByPlayer = CheckCollisionPointTriangle( pEnemy, ptri1, ptri2, ptri3 );
+
+}
+
+void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos ) {
+
+    int i = enemy->collidedBulletCount%enemy->maxCollidedBullets;
+    enemy->collidedBullets[i] = createBullet( bulletPos, BLACK );
+
+    float dX = enemy->pos.x - bulletPos.x;
+    float dY = enemy->pos.y - bulletPos.y;
+    float dZ = enemy->pos.z - bulletPos.z;
+
+    enemy->collidedBulletsDistance[i] = sqrt( dX * dX + dY * dY + dZ * dZ );
+    enemy->collidedBulletsHAngle[i] = RAD2DEG * atan2( enemy->pos.z - bulletPos.z, enemy->pos.x - bulletPos.x );
+    enemy->collidedBulletsVAngle[i] = RAD2DEG * atan2( enemy->pos.y - bulletPos.y, enemy->pos.x - bulletPos.x );
+
+    TraceLog( LOG_INFO, "d: %.2f; h: %.2f; v: %.2f", enemy->collidedBulletsDistance[i], enemy->collidedBulletsHAngle[i], enemy->collidedBulletsVAngle[i] );
+
+    enemy->collidedBulletCount++;
 
 }
 

@@ -5,8 +5,5 @@
 #include "Types.h"
 #include "raylib.h"
 
-Bullet createBullet();
+Bullet createBullet( Vector3 pos, Color color );
 void drawBullet( Bullet *bullet );
-void updateBullet( Bullet *bullet, float delta );
-bool checkCollisionBulletBlock( Bullet *bullet, Block *block );
-bool checkCollisionBulletEnemy( Bullet *bullet, Enemy *enemy );
