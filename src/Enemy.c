@@ -7,6 +7,7 @@
 #include "Block.h"
 #include "Bullet.h"
 #include "Enemy.h"
+#include "EnemyBullet.h"
 #include "ResourceManager.h"
 #include "raylib.h"
 
@@ -134,7 +135,7 @@ void drawEnemy( Enemy *enemy ) {
 
     int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
     for ( int i = 0; i < collidedBullets; i++ ) {
-        drawBullet( &enemy->collidedBullets[i] );
+        drawEnemyBullet( &enemy->collidedBullets[i] );
     }
 
     DrawModelWiresEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, BLACK );
@@ -191,12 +192,11 @@ void updateEnemy( Enemy *enemy, Player *player, float delta ) {
 
     int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
     for ( int i = 0; i < collidedBullets; i++ ) {
-        Bullet *b = &enemy->collidedBullets[i];
-        float h = enemy->rotationHorizontalAngle;
-        //b->pos.x = enemy->pos.x - cos( DEG2RAD * ( h - enemy->collidedBulletsHAngle[i] + 180 ) ) * enemy->collidedBulletsDistance[i];
-        //b->pos.z = enemy->pos.z + sin( DEG2RAD * ( enemy->collidedBulletsHAngle[i] - h -45 ) ) * enemy->collidedBulletsDistance[i];
-        //b->pos.y = enemy->pos.y - sin( DEG2RAD * ( enemy->collidedBulletsVAngle[i] ) ) * enemy->collidedBulletsDistance[i];
-        //b->pos.z = enemy->pos.z + sin( DEG2RAD * ( h - enemy->collidedBulletsHAngle[i] ) ) * enemy->collidedBulletsDistance[i];
+        EnemyBullet *b = &enemy->collidedBullets[i];
+        int h = enemy->rotationHorizontalAngle + 180;
+        b->drawPos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - b->hAngle ) ) * b->hDistance );
+        b->drawPos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - b->hAngle ) ) * b->hDistance );
+        b->drawPos.y = enemy->pos.y - ( sin( DEG2RAD * ( b->vAngle ) ) * b->vDistance );
     }
 
 }
@@ -387,19 +387,26 @@ void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {
 
 void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos ) {
 
-    int i = enemy->collidedBulletCount%enemy->maxCollidedBullets;
-    enemy->collidedBullets[i] = createBullet( bulletPos, BLACK );
-
+    int i = enemy->collidedBulletCount % enemy->maxCollidedBullets;
+    EnemyBullet bullet = createEnemyBullet( bulletPos, BLACK );
+    
     float dX = enemy->pos.x - bulletPos.x;
     float dY = enemy->pos.y - bulletPos.y;
     float dZ = enemy->pos.z - bulletPos.z;
 
-    enemy->collidedBulletsDistance[i] = sqrt( dX * dX + dY * dY + dZ * dZ );
-    enemy->collidedBulletsHAngle[i] = RAD2DEG * atan2( enemy->pos.z - bulletPos.z, enemy->pos.x - bulletPos.x );
-    enemy->collidedBulletsVAngle[i] = RAD2DEG * atan2( enemy->pos.y - bulletPos.y, enemy->pos.x - bulletPos.x );
+    bullet.hDistance = sqrt( dX * dX + dZ * dZ );
+    bullet.vDistance = sqrt( dX * dX + dY * dY );
+    bullet.hAngle = RAD2DEG * atan2( enemy->pos.z - bulletPos.z, enemy->pos.x - bulletPos.x );
+    bullet.vAngle = RAD2DEG * atan2( enemy->pos.y - bulletPos.y, enemy->pos.x - bulletPos.x );
 
-    TraceLog( LOG_INFO, "d: %.2f; h: %.2f; v: %.2f", enemy->collidedBulletsDistance[i], enemy->collidedBulletsHAngle[i], enemy->collidedBulletsVAngle[i] );
+    TraceLog( LOG_INFO, "hd: %.2f; vd: %.2f; h: %.2f; v: %.2f; he: %.2f", 
+            bullet.hDistance,
+            bullet.vDistance,
+            bullet.hAngle,
+            bullet.vAngle,
+            enemy->rotationHorizontalAngle );
 
+    enemy->collidedBullets[i] = bullet;
     enemy->collidedBulletCount++;
 
 }

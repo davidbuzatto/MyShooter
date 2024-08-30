@@ -14,10 +14,8 @@ Bullet createBullet( Vector3 pos, Color color ) {
     Bullet bullet = {
         .id = entityIdCounter++,
         .pos = pos,
-        //.radius = 0.05f,
-        //.color = color,
-        .radius = 0.2f,
-        .color = WHITE,
+        .radius = 0.05f,
+        .color = color,
         .collided = false
     };
 

@@ -35,7 +35,7 @@ const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 2;
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
-bool loadTestMap = false;
+bool loadTestMap = true;
 
 const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
 //const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
@@ -76,7 +76,8 @@ void configureGameWorld( GameWorld *gw ) {
 
     xCam = 0.0f;
     yCam = 25.0f;
-    zCam = 30.0f;
+    //zCam = 30.0f;
+    zCam = 1.0f;
 
     gw->maxCollidedBullets = 50;
     gw->collidedBulletCount = 0;
@@ -151,7 +152,7 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
             Enemy *enemy = &gw->enemies[i];
             if ( enemy->positionState == ENEMY_POSITION_STATE_ON_GROUND ) {
                 if ( GetRandomValue( 0, 100 ) == 0 ) {
-                    jumpEnemy( enemy );
+                    //jumpEnemy( enemy );
                 }
             }
             updateEnemy( enemy, player, delta );
@@ -541,6 +542,14 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
     if ( IsKeyPressed( KEY_L ) ) {
         loadTestMap = !loadTestMap;
         resetGameWorld( gw );
+    }
+
+    if ( IsKeyPressed( KEY_C ) ) {
+        if ( gw->camera.projection == CAMERA_ORTHOGRAPHIC ) {
+            gw->camera.projection = CAMERA_PERSPECTIVE;
+        } else {
+            gw->camera.projection = CAMERA_ORTHOGRAPHIC;
+        }
     }
 
     if ( IsKeyPressed( KEY_K ) ) {
