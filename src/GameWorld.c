@@ -73,6 +73,7 @@ void configureGameWorld( GameWorld *gw ) {
     //Color obstacleColor = Fade( LIME, 0.8f );
     Color enemyColor = RED;
     Color enemyEyeColor = (Color){ 38, 0, 82, 255 };
+    Color bulletColor = WHITE;
 
     xCam = 0.0f;
     yCam = 25.0f;
@@ -81,6 +82,7 @@ void configureGameWorld( GameWorld *gw ) {
 
     gw->maxCollidedBullets = 50;
     gw->collidedBulletCount = 0;
+    gw->bulletColor = bulletColor;
 
     if ( loadTestMap ) {
         processMapFile( "resources/maps/testMap.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
@@ -152,7 +154,7 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
             Enemy *enemy = &gw->enemies[i];
             if ( enemy->positionState == ENEMY_POSITION_STATE_ON_GROUND ) {
                 if ( GetRandomValue( 0, 100 ) == 0 ) {
-                    //jumpEnemy( enemy );
+                    jumpEnemy( enemy );
                 }
             }
             updateEnemy( enemy, player, delta );
@@ -544,14 +546,6 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
         resetGameWorld( gw );
     }
 
-    if ( IsKeyPressed( KEY_C ) ) {
-        if ( gw->camera.projection == CAMERA_ORTHOGRAPHIC ) {
-            gw->camera.projection = CAMERA_PERSPECTIVE;
-        } else {
-            gw->camera.projection = CAMERA_ORTHOGRAPHIC;
-        }
-    }
-
     if ( IsKeyPressed( KEY_K ) ) {
         if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ) {
             gw->playerInputType = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
@@ -625,14 +619,14 @@ void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cam
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
         if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( gw, player, &currentHit );
+            playerShotBullet( gw, player, &currentHit, gw->bulletColor );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
     } else {
         if ( IsKeyDown( KEY_LEFT_ALT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( gw, player, &currentHit );
+            playerShotBullet( gw, player, &currentHit, gw->bulletColor );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
@@ -679,7 +673,7 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
         if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
             if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                playerShotBullet( gw, player, &currentHit );
+                playerShotBullet( gw, player, &currentHit, gw->bulletColor );
             }
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;

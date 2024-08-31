@@ -1,9 +1,7 @@
 - Resolver tunelamento dos tiros (raycast);
-  - Modificar o sistema atual, removendo a colisão das balas com o ambiente e usando o raycast;
-  - Guardar identificador de TODOS os objetos;
-  - Desenhar onde os tiros acertaram (20 tiros no máximo);
-  - Remover o desenho das balas;
-  - Remover as balas em si;
+  - Remover as balas?
+  - Verificar o que é necessário no array de balas;
+  - Investigar erro de segmentação quando o mapa está em terceira pessoa;
 - Iluminação?
 - Ajustar movimentação com o mouse e teclas;
   - Modo terceira pessoa geral:

@@ -170,7 +170,7 @@ void updateEnemy( Enemy *enemy, Player *player, float delta ) {
 
     enemy->vel.y -= GRAVITY * delta;
 
-    enemy->rotationHorizontalAngle += enemy->rotationVel * delta;
+    //enemy->rotationHorizontalAngle += enemy->rotationVel * delta;
 
     if ( enemy->pos.y < enemy->lastPos.y ) {
         enemy->positionState = ENEMY_POSITION_STATE_FALLING;
@@ -385,10 +385,10 @@ void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {
 
 }
 
-void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos ) {
+void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor ) {
 
     int i = enemy->collidedBulletCount % enemy->maxCollidedBullets;
-    EnemyBullet bullet = createEnemyBullet( bulletPos, BLACK );
+    EnemyBullet bullet = createEnemyBullet( bulletPos, bulletColor );
     
     float dX = enemy->pos.x - bulletPos.x;
     float dY = enemy->pos.y - bulletPos.y;
@@ -396,15 +396,15 @@ void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos ) {
 
     bullet.hDistance = sqrt( dX * dX + dZ * dZ );
     bullet.vDistance = sqrt( dX * dX + dY * dY );
-    bullet.hAngle = RAD2DEG * atan2( enemy->pos.z - bulletPos.z, enemy->pos.x - bulletPos.x );
+    bullet.hAngle = RAD2DEG * atan2( enemy->pos.z - bulletPos.z, enemy->pos.x - bulletPos.x ) + enemy->rotationHorizontalAngle + 180;
     bullet.vAngle = RAD2DEG * atan2( enemy->pos.y - bulletPos.y, enemy->pos.x - bulletPos.x );
 
-    TraceLog( LOG_INFO, "hd: %.2f; vd: %.2f; h: %.2f; v: %.2f; he: %.2f", 
+    /*TraceLog( LOG_INFO, "hd: %.2f; vd: %.2f; h: %.2f; v: %.2f; he: %.2f", 
             bullet.hDistance,
             bullet.vDistance,
             bullet.hAngle,
             bullet.vAngle,
-            enemy->rotationHorizontalAngle );
+            enemy->rotationHorizontalAngle );*/
 
     enemy->collidedBullets[i] = bullet;
     enemy->collidedBulletCount++;

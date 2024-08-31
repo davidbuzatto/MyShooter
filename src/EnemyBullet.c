@@ -14,10 +14,8 @@ EnemyBullet createEnemyBullet( Vector3 pos, Color color ) {
     EnemyBullet bullet = {
         .pos = pos,
         .drawPos = pos,
-        //.radius = 0.05f,
-        //.color = color,
         .radius = 0.2f,
-        .color = WHITE,
+        .color = color,
         .hDistance = 0.0f,
         .vDistance = 0.0f,
         .hAngle = 0.0f,

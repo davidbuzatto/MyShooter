@@ -302,7 +302,8 @@ typedef struct GameWorld {
     Bullet collidedBullets[50];
     int maxCollidedBullets;
     int collidedBulletCount;
-
+    Color bulletColor;
+    
     GameWorldPlayerInputType playerInputType;
 
 } GameWorld;

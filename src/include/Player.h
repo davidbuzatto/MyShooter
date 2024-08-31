@@ -18,7 +18,7 @@ PlayerCollisionType checkCollisionPlayerPowerUp( Player *player, PowerUp *powerU
 BoundingBox getPlayerBoundingBox( Player *player );
 void createPlayerModel( Player *player );
 
-void playerShotBullet( GameWorld *gw,Player *player, IdentifiedRayCollision *irc );
+void playerShotBullet( GameWorld *gw,Player *player, IdentifiedRayCollision *irc, Color bulletColor );
 void cleanCollidedBullets( Player *player );
 
 void playerAcquirePowerUp( Player *player, PowerUp *powerUp );

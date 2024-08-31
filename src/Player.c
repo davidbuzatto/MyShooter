@@ -338,7 +338,7 @@ void createPlayerModel( Player *player ) {
 
 }
 
-void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *irc ) {
+void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *irc, Color bulletColor ) {
     
     float delta = GetFrameTime();
     player->timeToNextShotCounter += delta;
@@ -392,9 +392,9 @@ void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *ir
                 cleanCollidedBullets( player );
 
                 if ( enemyShot != NULL ) {
-                    addBulletToEnemy( enemyShot, irc->collision.point );
+                    addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
                 } else if ( createBulletWorld ) {
-                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, BLACK );
+                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor );
                     gw->collidedBulletCount++;
                 }
 
