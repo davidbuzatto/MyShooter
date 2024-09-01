@@ -192,11 +192,11 @@ void updateEnemy( Enemy *enemy, Player *player, float delta ) {
 
     int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
     for ( int i = 0; i < collidedBullets; i++ ) {
-        EnemyBullet *b = &enemy->collidedBullets[i];
+        EnemyBullet *bullet = &enemy->collidedBullets[i];
         int h = enemy->rotationHorizontalAngle + 180;
-        b->drawPos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - b->hAngle ) ) * b->hDistance );
-        b->drawPos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - b->hAngle ) ) * b->hDistance );
-        b->drawPos.y = enemy->pos.y - ( sin( DEG2RAD * ( b->vAngle ) ) * b->vDistance );
+        bullet->drawPos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
+        bullet->drawPos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
+        bullet->drawPos.y = enemy->pos.y - ( sin( DEG2RAD * ( bullet->vAngle ) ) * bullet->vDistance );
     }
 
 }

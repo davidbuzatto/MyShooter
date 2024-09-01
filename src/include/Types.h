@@ -154,9 +154,9 @@ typedef struct Player {
     float rotationSpeed;
     Vector3 scale;
 
-    Bullet *bullets;
-    int bulletQuantity;
-    int maxBullets;
+    //Bullet *bullets;
+    //int bulletQuantity;
+    //int maxBullets;
     PlayerWeaponState weaponState;
 
     float timeToNextShot;

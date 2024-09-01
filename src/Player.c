@@ -20,8 +20,6 @@ Player createPlayer( Vector3 pos ) {
     float cpDiff = 0.7f;
     float playerThickness = 2.0f;
 
-    int maxBullets = 200;
-
     Player player = {
         .pos = pos,
         .lastPos = {
@@ -56,9 +54,6 @@ Player createPlayer( Vector3 pos ) {
         .rotationSpeed = 150.0f,
         .scale = { 1.0f, 1.0f, 1.0f },
 
-        .bullets = (Bullet*) malloc( sizeof( Bullet ) * maxBullets ),
-        .bulletQuantity = 0,
-        .maxBullets = maxBullets,
         .weaponState = PLAYER_WEAPON_STATE_IDLE,
         .timeToNextShot = 0.1f,
         .timeToNextShotCounter = 0.0f,
@@ -347,27 +342,18 @@ void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *ir
 
         player->timeToNextShotCounter = 0.0f;
 
-        if ( player->bulletQuantity < player->maxBullets && player->currentAmmo > 0 ) {
+        if ( player->currentAmmo > 0 ) {
             
             Enemy *enemyShot = NULL;
             bool createBulletWorld = true;
-
-            int q = player->bulletQuantity;
             player->currentAmmo--;
-
-            player->bullets[q] = createBullet( (Vector3){0}, PINK );
-            Bullet *b = &player->bullets[q];
-
-            b->pos = player->pos;
-            player->bulletQuantity++;
-
 
             for ( int j = 0; j < gw->enemyQuantity; j++ ) {
 
                 Enemy *enemy = &gw->enemies[j];
 
                 if ( enemy->state == ENEMY_STATE_ALIVE && 
-                    enemy->id == irc->entityId ) {
+                     enemy->id == irc->entityId ) {
                     
                     enemy->currentHp--;
                     enemy->showHpBar = true;
@@ -388,9 +374,6 @@ void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *ir
 
             if ( irc->entityType != ENTITY_TYPE_NONE ) {
 
-                b->collided = true;
-                cleanCollidedBullets( player );
-
                 if ( enemyShot != NULL ) {
                     addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
                 } else if ( createBulletWorld ) {
@@ -398,57 +381,11 @@ void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *ir
                     gw->collidedBulletCount++;
                 }
 
-                /*char t = 0;
-                switch ( irc->entityType ) {
-                    case ENTITY_TYPE_BLOCK: t = 'b'; break;
-                    case ENTITY_TYPE_ENEMY: t = 'e'; break;
-                    case ENTITY_TYPE_OBSTACLE: t = 'o'; break;
-                    default: t = 'd'; break;
-                }
-                TraceLog( LOG_INFO, "%d %c", irc->entityId, t );*/
-
             }
 
         }
 
     }
-
-}
-
-void cleanCollidedBullets( Player *player ) {
-
-    // naive algorithm
-    int collidedCount = 0;
-
-    for ( int i = 0; i < player->bulletQuantity; i++ ) {
-        if ( player->bullets[i].collided ) {
-            collidedCount++;
-        }
-    }
-
-    int *collectedIds = (int*) malloc( collidedCount * sizeof( int ) );
-    int t = 0;
-
-    for ( int i = 0; i < player->bulletQuantity; i++ ) {
-        if ( player->bullets[i].collided ) {
-            collectedIds[t++] = player->bullets[i].id;
-        }
-    }
-
-
-    for ( int i = 0; i < collidedCount; i++ ) {
-        for ( int j = player->bulletQuantity-1; j >= 0; j-- ) {
-            if ( player->bullets[j].id == collectedIds[i] ) {
-                for ( int k = j+1; k < player->bulletQuantity; k++ ) {
-                    player->bullets[k-1] = player->bullets[k];
-                }
-                (player->bulletQuantity)--;
-                break;
-            }
-        }
-    }
-
-    free( collectedIds );
 
 }
 

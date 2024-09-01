@@ -166,8 +166,6 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
             setEnemyDetectedByPlayer( enemy, &gw->player, true );
         }
 
-        resolveBulletsOutOfBounds( gw );
-
         updateCameraTarget( gw, &gw->player );
         updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
         currentHit = resolveHitsWorld( gw );
@@ -224,7 +222,6 @@ void drawGameWorld( GameWorld *gw ) {
     drawPlayerHud( &gw->player );
     drawReticle( gw, gw->cameraType, gw->player.weaponState, 30 );
 
-    // debug info
     if ( showDebugInfo ) {
         drawDebugInfo( gw );
     }
@@ -879,32 +876,6 @@ void resolveCollisionPlayerEnemy( Player *player, Enemy *enemy ) {
     
 }
 
-void resolveBulletsOutOfBounds( GameWorld *gw ) {
-
-    Bullet *bullets = gw->player.bullets;
-
-    for ( int i = 0; i < gw->player.bulletQuantity; i++ ) {
-
-        Bullet *bullet = &bullets[i];
-
-        // out of bounds
-        if ( !bullet->collided ) {
-            if ( bullet->pos.x * bullet->pos.x +
-                 bullet->pos.y * bullet->pos.y +
-                 bullet->pos.z * bullet->pos.z > 
-                 ( gw->ground.dim.x * gw->ground.dim.x * 4 ) ) {
-                bullet->collided = true;
-            }
-        }
-
-        if ( bullet->collided ) {
-            cleanCollidedBullets( &gw->player );
-        }
-
-    }
-
-}
-
 void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp ) {
 
     PlayerCollisionType coll = checkCollisionPlayerPowerUp( player, powerUp );
@@ -995,13 +966,12 @@ void drawDebugInfo( GameWorld *gw ) {
 
     DrawFPS( 10, 10 );
     DrawText( TextFormat( "player: x=%.1f, y=%.1f, z=%.1f", gw->player.pos.x, gw->player.pos.y, gw->player.pos.z ), 10, 30, 20, BLACK );
-    DrawText( TextFormat( "active bullets: %d", gw->player.bulletQuantity ), 10, 50, 20, BLACK );
-    DrawText( TextFormat( "active enemies: %d", gw->enemyQuantity ), 10, 70, 20, BLACK );
-    DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 90, 20, BLACK );
-    DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 110, 20, BLACK );
-    showCameraInfo( &gw->camera, 10, 130 );
+    DrawText( TextFormat( "active enemies: %d", gw->enemyQuantity ), 10, 50, 20, BLACK );
+    DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 70, 20, BLACK );
+    DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 90, 20, BLACK );
+    showCameraInfo( &gw->camera, 10, 110 );
 
-    // draw collision points (debug)
+    // draw collision points with raycast (debug)
     if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {
 
         Color colors[] = { RED, WHITE, DARKPURPLE, GREEN, BLUE, YELLOW, ORANGE, DARKGRAY };
