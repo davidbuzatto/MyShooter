@@ -17,5 +17,5 @@ void createEnemies( GameWorld *gw, Vector3 *positions, int enemyQuantity, Color 
 void createEnemiesModel( Enemy *enemies, int enemyQuantity );
 void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines );
 void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor );
-
+Matrix getEnemyTransformMatrix( Enemy *enemy );
 void cleanDeadEnemies( GameWorld *gw );

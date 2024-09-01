@@ -19,6 +19,7 @@
 #include "Bullet.h"
 #include "Block.h"
 #include "raylib.h"
+#include "raymath.h"
 
 //#include "raymath.h"
 //#define RAYGUI_IMPLEMENTATION    // to use raygui, comment these three lines.
@@ -36,6 +37,7 @@ const int CAMERA_TYPE_QUANTITY = 2;
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
 bool loadTestMap = true;
+const char *TEST_MAP_FILENAME = "testMap.txt";
 
 const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
 //const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
@@ -85,7 +87,7 @@ void configureGameWorld( GameWorld *gw ) {
     gw->bulletColor = bulletColor;
 
     if ( loadTestMap ) {
-        processMapFile( "resources/maps/testMap.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
+        processMapFile( TextFormat( "resources/maps/%s", TEST_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
     } else {
         processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
     }
@@ -924,7 +926,8 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
     }
 
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
-        RayCollision rc = GetRayCollisionBox( ray, getEnemyBoundingBox( &gw->enemies[i] ) );  
+        Enemy *e = &gw->enemies[i];
+        RayCollision rc = GetRayCollisionMesh( ray, e->model.meshes[0], getEnemyTransformMatrix( e ) );
         if ( rc.hit ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
                 .entityId = gw->enemies[i].id,
@@ -974,7 +977,7 @@ void drawDebugInfo( GameWorld *gw ) {
     // draw collision points with raycast (debug)
     if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {
 
-        Color colors[] = { RED, WHITE, DARKPURPLE, GREEN, BLUE, YELLOW, ORANGE, DARKGRAY };
+        Color colors[] = { BLACK, WHITE, DARKPURPLE, GREEN, BLUE, YELLOW, ORANGE, DARKGRAY };
 
         for ( int i = 0; i < hitCounter; i++ ) {
 

@@ -9,6 +9,7 @@
 #include "Enemy.h"
 #include "ResourceManager.h"
 #include "raylib.h"
+#include "raymath.h"
 
 Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
 
@@ -410,6 +411,14 @@ void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor ) {
     enemy->collidedBullets[i] = bullet;
     enemy->collidedBulletCount++;
 
+}
+
+Matrix getEnemyTransformMatrix( Enemy *enemy ) {
+    Matrix matScale = MatrixScale( enemy->scale.x, enemy->scale.y, enemy->scale.z );
+    Matrix matRotation = MatrixRotate( enemy->rotationAxis, enemy->rotationHorizontalAngle * DEG2RAD );
+    Matrix matTranslation = MatrixTranslate( enemy->pos.x, enemy->pos.y, enemy->pos.z );
+    Matrix matTransform = MatrixMultiply( MatrixMultiply( matScale, matRotation ), matTranslation );
+    return MatrixMultiply( enemy->model.transform, matTransform );
 }
 
 void cleanDeadEnemies( GameWorld *gw ) {
