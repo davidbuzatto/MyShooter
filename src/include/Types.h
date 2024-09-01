@@ -114,19 +114,11 @@ typedef struct Bullet {
     Vector3 pos;
     float radius;
     Color color;
-    bool collided;
-} Bullet;
-
-typedef struct EnemyBullet {
-    Vector3 pos;
-    Vector3 drawPos;
-    float radius;
-    Color color;
     float hDistance;
     float vDistance;
     float hAngle;
     float vAngle;
-} EnemyBullet;
+} Bullet;
 
 typedef struct Player {
 
@@ -264,7 +256,7 @@ typedef struct Enemy {
 
     int damageOnContact;
 
-    EnemyBullet collidedBullets[5];
+    Bullet collidedBullets[5];
     int maxCollidedBullets;
     int collidedBulletCount;
 

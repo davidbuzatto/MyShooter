@@ -7,7 +7,6 @@
 #include "Block.h"
 #include "Bullet.h"
 #include "Enemy.h"
-#include "EnemyBullet.h"
 #include "ResourceManager.h"
 #include "raylib.h"
 
@@ -135,7 +134,7 @@ void drawEnemy( Enemy *enemy ) {
 
     int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
     for ( int i = 0; i < collidedBullets; i++ ) {
-        drawEnemyBullet( &enemy->collidedBullets[i] );
+        drawBullet( &enemy->collidedBullets[i] );
     }
 
     DrawModelWiresEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, BLACK );
@@ -192,11 +191,11 @@ void updateEnemy( Enemy *enemy, Player *player, float delta ) {
 
     int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
     for ( int i = 0; i < collidedBullets; i++ ) {
-        EnemyBullet *bullet = &enemy->collidedBullets[i];
+        Bullet *bullet = &enemy->collidedBullets[i];
         int h = enemy->rotationHorizontalAngle + 180;
-        bullet->drawPos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
-        bullet->drawPos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
-        bullet->drawPos.y = enemy->pos.y - ( sin( DEG2RAD * ( bullet->vAngle ) ) * bullet->vDistance );
+        bullet->pos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
+        bullet->pos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
+        bullet->pos.y = enemy->pos.y - ( sin( DEG2RAD * ( bullet->vAngle ) ) * bullet->vDistance );
     }
 
 }
@@ -283,6 +282,7 @@ EnemyCollisionType checkCollisionEnemyBlock( Enemy *enemy, Block *block, bool ch
 }
 
 BoundingBox getEnemyBoundingBox( Enemy *enemy ) {
+
     return (BoundingBox) {
         .min = {
             .x = enemy->pos.x - enemy->dim.x / 2,
@@ -295,6 +295,7 @@ BoundingBox getEnemyBoundingBox( Enemy *enemy ) {
             .z = enemy->pos.z + enemy->dim.z / 2,
         },
     };
+
 }
 
 void createEnemies( GameWorld *gw, Vector3 *positions, int enemyQuantity, Color color, Color eyeColor ) {
@@ -388,7 +389,7 @@ void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {
 void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor ) {
 
     int i = enemy->collidedBulletCount % enemy->maxCollidedBullets;
-    EnemyBullet bullet = createEnemyBullet( bulletPos, bulletColor );
+    Bullet bullet = createBullet( bulletPos, bulletColor );
     
     float dX = enemy->pos.x - bulletPos.x;
     float dY = enemy->pos.y - bulletPos.y;

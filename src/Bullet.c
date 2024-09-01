@@ -16,7 +16,10 @@ Bullet createBullet( Vector3 pos, Color color ) {
         .pos = pos,
         .radius = 0.2f,
         .color = color,
-        .collided = false
+        .hDistance = 0.0f,
+        .vDistance = 0.0f,
+        .hAngle = 0.0f,
+        .vAngle = 0.0f
     };
 
     return bullet;
