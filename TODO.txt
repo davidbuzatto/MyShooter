@@ -1,13 +1,3 @@
-- Resolver tunelamento dos tiros (raycast);
-  - Remover as balas?
-  - Verificar o que é necessário no array de balas;
-  - Investigar erro de segmentação quando o mapa está em terceira pessoa;
 - Iluminação?
-- Ajustar movimentação com o mouse e teclas;
-  - Modo terceira pessoa geral:
-    - Usando gamepad:
-      - Ajustar movimentação da câmera e baseado na mesma, ajustar a movimentação do jogador
-- Para a visão em terceira pessoa (aka Dark Souls, Lies of P etc.) a câmera
-  deve ser posicionada atrás baseada em um ângulo e mirar em 180 do centro
-  do personagem (insight apenas);
-- Detectar colisão apenas de objetos que estão perto do jogador;
+- Ajustar movimentação com o mouse e teclas <- melhorar mira com o mouse.
+- Criar novos tipos de armas.

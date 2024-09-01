@@ -26,6 +26,8 @@
 //#include "raygui.h"              // other compilation units must only include
 //#undef RAYGUI_IMPLEMENTATION     // raygui.h
 
+#define MAX_HITS 100
+
 // extern from GameWorld.h
 const float GRAVITY = 50.0f;
 
@@ -48,7 +50,7 @@ const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE
 bool showDebugInfo = true;
 bool drawWalls = true;
 
-IdentifiedRayCollision hits[100];
+IdentifiedRayCollision hits[MAX_HITS];
 IdentifiedRayCollision currentHit = {0};
 int hitCounter = 0;
 
@@ -905,7 +907,7 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
 
     for ( int i = 0; i < 5; i++ ) {
         RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( b[i] ) );  
-        if ( rc.hit ) {
+        if ( rc.hit && hitCounter < MAX_HITS ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
                 .entityId = b[i]->id,
                 .entityType = ENTITY_TYPE_BLOCK,
@@ -916,7 +918,7 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
 
     for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
         RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles[i] ) );  
-        if ( rc.hit ) {
+        if ( rc.hit && hitCounter < MAX_HITS ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
                 .entityId = gw->obstacles[i].id,
                 .entityType = ENTITY_TYPE_OBSTACLE,
@@ -928,7 +930,7 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
         Enemy *e = &gw->enemies[i];
         RayCollision rc = GetRayCollisionMesh( ray, e->model.meshes[0], getEnemyTransformMatrix( e ) );
-        if ( rc.hit ) {
+        if ( rc.hit && hitCounter < MAX_HITS ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
                 .entityId = gw->enemies[i].id,
                 .entityType = ENTITY_TYPE_ENEMY,
