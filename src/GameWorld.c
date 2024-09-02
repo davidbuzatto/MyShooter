@@ -223,6 +223,46 @@ void drawGameWorld( GameWorld *gw ) {
         drawBlock( &gw->nearWall );
     }
 
+    // ----------
+
+    Player *player = &gw->player;
+    float cosH = cos( DEG2RAD * player->rotationHorizontalAngle );
+    float sinH = -sin( DEG2RAD * player->rotationHorizontalAngle );
+    float cosV = cos( DEG2RAD * player->rotationVerticalAngle );    
+    float d = 10.0f;
+    Vector3 p = {
+        .x = player->pos.x + cosH * d,
+        .y = player->pos.y + cosV * d,
+        .z = player->pos.z + sinH * d,
+    };
+
+    DrawSphere( p, 0.5, BLACK );
+    float ar = RAD2DEG * atan2( gw->camera.position.y - gw->player.pos.y, gw->camera.position.x - gw->player.pos.x );
+
+    int t = 30;
+    float inc = 360.0f / t;
+    for ( int i = 0; i < t; i++ ) {
+        Vector3 cPos = p;
+        float d = 2.0f;
+        float a = inc * i;
+        
+        cPos.y += sin( DEG2RAD * a ) * d;
+        cPos.z += cos( DEG2RAD * a ) * d;
+
+        float c1 = cPos.x - p.x;
+        float c2 = cPos.z - p.z;
+        d = sqrt( c1 * c1 + c2 * c2 );
+        a = RAD2DEG * atan2( cPos.z - p.z, cPos.x - p.x );
+        cPos.x = p.x + cos( DEG2RAD * ( a - player->rotationHorizontalAngle ) ) * d;
+        cPos.z = p.z + sin( DEG2RAD * ( a - player->rotationHorizontalAngle ) ) * d;
+
+        //cPos.z += cos( DEG2RAD * a ) * d;
+        DrawSphere( cPos, 0.2, WHITE );
+
+    }
+
+    // ----------------
+
     EndMode3D();
 
     for ( int i = 0; i < gw->enemyQuantity; i++ ) {
@@ -988,12 +1028,18 @@ MultipleIdentifiedRayCollision resolveMultipleHitsWorld( GameWorld *gw ) {
 
     for ( int i = 0; i < maxQuantity; i++ ) {
 
+        // ----------------
+
         Vector3 cPos = gw->camera.target;
-        float d = (float) GetRandomValue( 1, 5 ) / 2.0f;
-        float a = (float) GetRandomValue( 0, 360 ) * i;
-        cPos.x += cos( DEG2RAD * gw->player.rotationHorizontalAngle ) * Vector3Distance( gw->player.pos, gw->camera.position );
+        //float d = (float) GetRandomValue( 1, 5 ) / 2.0f;
+        //float a = (float) GetRandomValue( 0, 360 ) * i;
+        float d = 2.0f;
+        float a = 30 * i;
+        cPos.x += cos( atan2( gw->camera.position.y - gw->player.pos.y, gw->camera.position.x - gw->player.pos.x ) + PI ) * Vector3Distance( gw->player.pos, gw->camera.position );
         cPos.y += sin( DEG2RAD * a ) * d;
         cPos.z += cos( DEG2RAD * a ) * d;
+
+        // ---------------
 
         Ray ray = getPlayerToVector3Ray( &gw->player, cPos );
         hitCounter = 0;
