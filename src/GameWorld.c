@@ -36,6 +36,7 @@ int entityIdCounter = 1;
 
 const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 2;
+const int WEAPON_TYPE_QUANTITY = 3;
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
 bool loadTestMap = true;
@@ -52,6 +53,7 @@ bool drawWalls = true;
 
 IdentifiedRayCollision hits[MAX_HITS];
 IdentifiedRayCollision currentHit = {0};
+MultipleIdentifiedRayCollision currentMultipleHit = {0};
 int hitCounter = 0;
 
 float xCam;
@@ -81,7 +83,6 @@ void configureGameWorld( GameWorld *gw ) {
 
     xCam = 0.0f;
     yCam = 25.0f;
-    //zCam = 30.0f;
     zCam = 1.0f;
 
     gw->maxCollidedBullets = 50;
@@ -172,7 +173,12 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
 
         updateCameraTarget( gw, &gw->player );
         updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
-        currentHit = resolveHitsWorld( gw );
+
+        if ( player->weaponType == PLAYER_WEAPON_TYPE_SHOTGUN ) {
+            currentMultipleHit = resolveMultipleHitsWorld( gw );
+        } else {
+            currentHit = resolveHitsWorld( gw );
+        }
 
     }
 
@@ -620,14 +626,14 @@ void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cam
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
         if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( gw, player, &currentHit, gw->bulletColor );
+            playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
     } else {
         if ( IsKeyDown( KEY_LEFT_ALT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotBullet( gw, player, &currentHit, gw->bulletColor );
+            playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
@@ -672,12 +678,38 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
         }
 
         if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
+
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                playerShotBullet( gw, player, &currentHit, gw->bulletColor );
+
+            switch ( player->weaponType ) {
+                case PLAYER_WEAPON_TYPE_HANDGUN:
+                    if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                        TraceLog( LOG_INFO, "teste" );
+                        //playerShotHandgun( gw, player, &currentHit, gw->bulletColor );
+                        playerShotHandgun( gw, player, &currentHit, BLACK );
+                    }
+                    break;
+                case PLAYER_WEAPON_TYPE_SUBMACHINEGUN:
+                    if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                        //playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
+                        playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
+                    }
+                    break;
+                case PLAYER_WEAPON_TYPE_SHOTGUN:
+                    if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                        //playerShotShotgun( gw, player, &currentMultipleHit, gw->bulletColor );
+                        playerShotShotgun( gw, player, &currentMultipleHit, GREEN );
+                    }
+                    break;
             }
+
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
+        }
+
+        if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_FACE_UP ) ) {
+            player->weaponType++;
+            player->weaponType %= WEAPON_TYPE_QUANTITY;
         }
 
     }
@@ -948,6 +980,79 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
 
 }
 
+MultipleIdentifiedRayCollision resolveMultipleHitsWorld( GameWorld *gw ) {
+
+    int maxQuantity = 10;
+
+    MultipleIdentifiedRayCollision mirc = {0};
+
+    for ( int i = 0; i < maxQuantity; i++ ) {
+
+        Vector3 cPos = gw->camera.target;
+        float d = (float) GetRandomValue( 1, 5 ) / 2.0f;
+        float a = (float) GetRandomValue( 0, 360 ) * i;
+        cPos.x += cos( DEG2RAD * gw->player.rotationHorizontalAngle ) * Vector3Distance( gw->player.pos, gw->camera.position );
+        cPos.y += sin( DEG2RAD * a ) * d;
+        cPos.z += cos( DEG2RAD * a ) * d;
+
+        Ray ray = getPlayerToVector3Ray( &gw->player, cPos );
+        hitCounter = 0;
+
+        Block *b[5] = {
+            &gw->ground,
+            &gw->leftWall,
+            &gw->rightWall,
+            &gw->farWall,
+            &gw->nearWall
+        };
+
+        for ( int i = 0; i < 5; i++ ) {
+            RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( b[i] ) );  
+            if ( rc.hit && hitCounter < MAX_HITS ) {
+                hits[hitCounter++] = (IdentifiedRayCollision) {
+                    .entityId = b[i]->id,
+                    .entityType = ENTITY_TYPE_BLOCK,
+                    .collision = rc
+                };
+            }
+        }
+
+        for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
+            RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles[i] ) );  
+            if ( rc.hit && hitCounter < MAX_HITS ) {
+                hits[hitCounter++] = (IdentifiedRayCollision) {
+                    .entityId = gw->obstacles[i].id,
+                    .entityType = ENTITY_TYPE_OBSTACLE,
+                    .collision = rc
+                };
+            }
+        }
+
+        for ( int i = 0; i < gw->enemyQuantity; i++ ) {
+            Enemy *e = &gw->enemies[i];
+            RayCollision rc = GetRayCollisionMesh( ray, e->model.meshes[0], getEnemyTransformMatrix( e ) );
+            if ( rc.hit && hitCounter < MAX_HITS ) {
+                hits[hitCounter++] = (IdentifiedRayCollision) {
+                    .entityId = gw->enemies[i].id,
+                    .entityType = ENTITY_TYPE_ENEMY,
+                    .collision = rc
+                };
+            }
+        }
+
+        qsort( hits, hitCounter, sizeof( IdentifiedRayCollision ), compareRaycollision );
+        if ( hitCounter > 0 ) {
+            IdentifiedRayCollision rc = hits[0];
+            mirc.irCollisions[mirc.quantity] = rc;
+            mirc.quantity++;
+        }
+
+    }
+
+    return mirc;
+
+}
+
 int compareRaycollision( const void *pr1, const void *pr2 ) {
     IdentifiedRayCollision *r1 = (IdentifiedRayCollision*) pr1;
     IdentifiedRayCollision *r2 = (IdentifiedRayCollision*) pr2;
@@ -969,12 +1074,20 @@ void resetGameWorld( GameWorld *gw ) {
 
 void drawDebugInfo( GameWorld *gw ) {
 
+    char weaponType[20];
+    switch ( gw->player.weaponType ) {
+        case PLAYER_WEAPON_TYPE_HANDGUN: strcpy( weaponType, "handgun" ); break;
+        case PLAYER_WEAPON_TYPE_SUBMACHINEGUN: strcpy( weaponType, "smg" ); break;
+        case PLAYER_WEAPON_TYPE_SHOTGUN: strcpy( weaponType, "shotgun" ); break;
+    }
+
     DrawFPS( 10, 10 );
     DrawText( TextFormat( "player: x=%.1f, y=%.1f, z=%.1f", gw->player.pos.x, gw->player.pos.y, gw->player.pos.z ), 10, 30, 20, BLACK );
     DrawText( TextFormat( "active enemies: %d", gw->enemyQuantity ), 10, 50, 20, BLACK );
     DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 70, 20, BLACK );
     DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 90, 20, BLACK );
-    showCameraInfo( &gw->camera, 10, 110 );
+    DrawText( TextFormat( "weapon type: %s", weaponType ), 10, 110, 20, BLACK );
+    showCameraInfo( &gw->camera, 10, 130 );
 
     // draw collision points with raycast (debug)
     if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {

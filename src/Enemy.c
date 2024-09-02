@@ -146,11 +146,14 @@ void drawEnemyHpBar( Enemy *enemy, Camera3D camera ) {
 
     if ( enemy->showHpBar && enemy->state == ENEMY_STATE_ALIVE && enemy->detectedByPlayer ) {
 
-        float barWidth = 120.0f;
-        int barHeight = 10;
+        float distance = Vector3Distance( enemy->pos, camera.position );
+        float barWidth = 1200.0f / distance;
+        int barHeight = (int) ( 200.f / distance );
 
         Vector3 p = enemy->pos;
+        p.x += cos( DEG2RAD * ( enemy->rotationHorizontalAngle + 180 ) ) * enemy->dim.x / 2;
         p.y += enemy->dim.y - 0.5f;
+        p.z += -sin( DEG2RAD * ( enemy->rotationHorizontalAngle + 180 ) ) * enemy->dim.z / 2;
 
         Vector2 v = GetWorldToScreen( p, camera );
         DrawRectangle( v.x - barWidth / 2, v.y - barHeight / 2, (int) (barWidth * enemy->currentHp / enemy->maxHp), barHeight, RED );
@@ -340,22 +343,22 @@ void createEnemiesModel( Enemy *enemies, int enemyQuantity ) {
 
 void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {
 
-    float t = 50.0f;
-    float a = 44.0f;
+    float distance = 200.0f;
+    float angle = 44.0f;
 
     Vector3 vpos = player->pos;
     vpos.y = 0;
 
     Vector3 vdes1 = {
-        vpos.x + cos( DEG2RAD * ( player->rotationHorizontalAngle + a ) ) * t,
+        vpos.x + cos( DEG2RAD * ( player->rotationHorizontalAngle + angle ) ) * distance,
         vpos.y,
-        vpos.z + -sin( DEG2RAD * ( player->rotationHorizontalAngle + a ) ) * t
+        vpos.z + -sin( DEG2RAD * ( player->rotationHorizontalAngle + angle ) ) * distance
     };
 
     Vector3 vdes2 = {
-        vpos.x + cos( DEG2RAD * ( player->rotationHorizontalAngle - a ) ) * t,
+        vpos.x + cos( DEG2RAD * ( player->rotationHorizontalAngle - angle ) ) * distance,
         vpos.y,
-        vpos.z + -sin( DEG2RAD * ( player->rotationHorizontalAngle - a ) ) * t
+        vpos.z + -sin( DEG2RAD * ( player->rotationHorizontalAngle - angle ) ) * distance
     };
 
     if ( showLines ) {

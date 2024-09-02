@@ -62,6 +62,12 @@ typedef enum PlayerWeaponState {
     PLAYER_WEAPON_STATE_READY
 } PlayerWeaponState;
 
+typedef enum PlayerWeaponType {
+    PLAYER_WEAPON_TYPE_HANDGUN,
+    PLAYER_WEAPON_TYPE_SUBMACHINEGUN,
+    PLAYER_WEAPON_TYPE_SHOTGUN
+} PlayerWeaponType;
+
 typedef enum PowerUpType {
     POWER_UP_TYPE_HP,
     POWER_UP_TYPE_AMMO
@@ -173,6 +179,7 @@ typedef struct Player {
     bool immortal;
     
     int currentAmmo;
+    PlayerWeaponType weaponType;
 
     PlayerState state;
 
@@ -267,6 +274,11 @@ typedef struct IdentifiedRayCollision {
     EntityType entityType;
     RayCollision collision;
 } IdentifiedRayCollision;
+
+typedef struct MultipleIdentifiedRayCollision {
+    IdentifiedRayCollision irCollisions[10];
+    int quantity;
+} MultipleIdentifiedRayCollision;
 
 typedef struct GameWorld {
 

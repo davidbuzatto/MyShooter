@@ -61,6 +61,7 @@ void resolveCollisionEnemyWalls( Enemy *enemy, Block *leftWall, Block *rightWall
 void resolveCollisionPlayerEnemy( Player *player, Enemy *enemy );
 void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp );
 IdentifiedRayCollision resolveHitsWorld( GameWorld *gw );
+MultipleIdentifiedRayCollision resolveMultipleHitsWorld( GameWorld *gw );
 
 void resetGameWorld( GameWorld *gw );
 void drawDebugInfo( GameWorld *gw );

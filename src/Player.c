@@ -75,6 +75,8 @@ Player createPlayer( Vector3 pos ) {
         .immortal = false,
 
         .currentAmmo = 200,
+        .weaponType = PLAYER_WEAPON_TYPE_SHOTGUN,
+
         .state = PLAYER_STATE_ALIVE
 
     };
@@ -333,7 +335,54 @@ void createPlayerModel( Player *player ) {
 
 }
 
-void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *irc, Color bulletColor ) {
+void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc, Color bulletColor ) {
+    
+    if ( player->currentAmmo > 0 ) {
+        
+        Enemy *enemyShot = NULL;
+        bool createBulletWorld = true;
+        player->currentAmmo--;
+
+        for ( int i = 0; i < gw->enemyQuantity; i++ ) {
+
+            Enemy *enemy = &gw->enemies[i];
+
+            if ( enemy->state == ENEMY_STATE_ALIVE && 
+                    enemy->id == irc->entityId ) {
+                
+                enemy->currentHp--;
+                enemy->showHpBar = true;
+                enemyShot = enemy;
+
+                if ( enemy->currentHp == 0 ) {
+                    enemy->state = ENEMY_STATE_DEAD;
+                    enemyShot = NULL;
+                    createBulletWorld = false;
+                    cleanDeadEnemies( gw );
+                }
+
+                break;
+
+            }
+
+        }
+
+        if ( irc->entityType != ENTITY_TYPE_NONE ) {
+
+            if ( enemyShot != NULL ) {
+                addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
+            } else if ( createBulletWorld ) {
+                gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor );
+                gw->collidedBulletCount++;
+            }
+
+        }
+        
+    }
+
+}
+
+void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc, Color bulletColor ) {
     
     float delta = GetFrameTime();
     player->timeToNextShotCounter += delta;
@@ -348,9 +397,9 @@ void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *ir
             bool createBulletWorld = true;
             player->currentAmmo--;
 
-            for ( int j = 0; j < gw->enemyQuantity; j++ ) {
+            for ( int i = 0; i < gw->enemyQuantity; i++ ) {
 
-                Enemy *enemy = &gw->enemies[j];
+                Enemy *enemy = &gw->enemies[i];
 
                 if ( enemy->state == ENEMY_STATE_ALIVE && 
                      enemy->id == irc->entityId ) {
@@ -385,6 +434,59 @@ void playerShotBullet( GameWorld *gw, Player *player, IdentifiedRayCollision *ir
 
         }
 
+    }
+
+}
+
+void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayCollision *mirc, Color bulletColor ) {
+    
+    if ( player->currentAmmo > 0 ) {
+        
+        for ( int i = 0; i < mirc->quantity; i++ ) {
+            
+            IdentifiedRayCollision *irc = &mirc->irCollisions[i];
+            playerShotHandgun( gw, player, irc, bulletColor );
+            /*Enemy *enemyShot = NULL;
+            bool createBulletWorld = true;
+            player->currentAmmo--;
+
+            for ( int j = 0; j < gw->enemyQuantity; j++ ) {
+
+                Enemy *enemy = &gw->enemies[j];
+                
+                if ( enemy->state == ENEMY_STATE_ALIVE && 
+                     enemy->id == irc->entityId ) {
+                    
+                    enemy->currentHp--;
+                    enemy->showHpBar = true;
+                    enemyShot = enemy;
+
+                    if ( enemy->currentHp == 0 ) {
+                        enemy->state = ENEMY_STATE_DEAD;
+                        enemyShot = NULL;
+                        createBulletWorld = false;
+                        cleanDeadEnemies( gw );
+                    }
+
+                    break;
+
+                }
+
+            }
+
+            if ( irc->entityType != ENTITY_TYPE_NONE ) {
+
+                if ( enemyShot != NULL ) {
+                    addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
+                } else if ( createBulletWorld ) {
+                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor );
+                    gw->collidedBulletCount++;
+                }
+
+            }*/
+
+        }
+        
     }
 
 }

@@ -1,3 +1,7 @@
+- Finalizar tiros usando shotgun
+  - Angulação;
+  - Balas fantasmas;
+- Calcular hits apenas quando atirar;
 - Iluminação?
 - Ajustar movimentação com o mouse e teclas <- melhorar mira com o mouse.
 - Criar novos tipos de armas.
