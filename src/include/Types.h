@@ -276,7 +276,7 @@ typedef struct IdentifiedRayCollision {
 } IdentifiedRayCollision;
 
 typedef struct MultipleIdentifiedRayCollision {
-    IdentifiedRayCollision irCollisions[10];
+    IdentifiedRayCollision irCollisions[20];
     int quantity;
 } MultipleIdentifiedRayCollision;
 

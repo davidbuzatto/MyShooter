@@ -223,45 +223,12 @@ void drawGameWorld( GameWorld *gw ) {
         drawBlock( &gw->nearWall );
     }
 
-    // ----------
-
     Player *player = &gw->player;
-    float cosH = cos( DEG2RAD * player->rotationHorizontalAngle );
-    float sinH = -sin( DEG2RAD * player->rotationHorizontalAngle );
-    float cosV = cos( DEG2RAD * player->rotationVerticalAngle );    
-    float d = 10.0f;
-    Vector3 p = {
-        .x = player->pos.x + cosH * d,
-        .y = player->pos.y + cosV * d,
-        .z = player->pos.z + sinH * d,
-    };
-
-    DrawSphere( p, 0.5, BLACK );
-    float ar = RAD2DEG * atan2( gw->camera.position.y - gw->player.pos.y, gw->camera.position.x - gw->player.pos.x );
-
-    int t = 30;
-    float inc = 360.0f / t;
-    for ( int i = 0; i < t; i++ ) {
-        Vector3 cPos = p;
-        float d = 2.0f;
-        float a = inc * i;
-        
-        cPos.y += sin( DEG2RAD * a ) * d;
-        cPos.z += cos( DEG2RAD * a ) * d;
-
-        float c1 = cPos.x - p.x;
-        float c2 = cPos.z - p.z;
-        d = sqrt( c1 * c1 + c2 * c2 );
-        a = RAD2DEG * atan2( cPos.z - p.z, cPos.x - p.x );
-        cPos.x = p.x + cos( DEG2RAD * ( a - player->rotationHorizontalAngle ) ) * d;
-        cPos.z = p.z + sin( DEG2RAD * ( a - player->rotationHorizontalAngle ) ) * d;
-
-        //cPos.z += cos( DEG2RAD * a ) * d;
-        DrawSphere( cPos, 0.2, WHITE );
-
+    if ( player->weaponType == PLAYER_WEAPON_TYPE_SHOTGUN ) {
+        currentMultipleHit = resolveMultipleHitsWorld( gw );
+    } else {
+        currentHit = resolveHitsWorld( gw );
     }
-
-    // ----------------
 
     EndMode3D();
 
@@ -724,7 +691,6 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
             switch ( player->weaponType ) {
                 case PLAYER_WEAPON_TYPE_HANDGUN:
                     if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        TraceLog( LOG_INFO, "teste" );
                         //playerShotHandgun( gw, player, &currentHit, gw->bulletColor );
                         playerShotHandgun( gw, player, &currentHit, BLACK );
                     }
@@ -1022,24 +988,36 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
 
 MultipleIdentifiedRayCollision resolveMultipleHitsWorld( GameWorld *gw ) {
 
-    int maxQuantity = 10;
+    int pelletQuantity = 20;
+    Player *player = &gw->player;
+    Vector3 centralTraget = gw->camera.target;
 
     MultipleIdentifiedRayCollision mirc = {0};
+    //DrawSphere( centralTraget, 0.5, BLACK );
 
-    for ( int i = 0; i < maxQuantity; i++ ) {
+    for ( int i = 0; i < pelletQuantity; i++ ) {
 
-        // ----------------
+        Vector3 cPos = centralTraget;
 
-        Vector3 cPos = gw->camera.target;
-        //float d = (float) GetRandomValue( 1, 5 ) / 2.0f;
-        //float a = (float) GetRandomValue( 0, 360 ) * i;
-        float d = 2.0f;
-        float a = 30 * i;
-        cPos.x += cos( atan2( gw->camera.position.y - gw->player.pos.y, gw->camera.position.x - gw->player.pos.x ) + PI ) * Vector3Distance( gw->player.pos, gw->camera.position );
-        cPos.y += sin( DEG2RAD * a ) * d;
-        cPos.z += cos( DEG2RAD * a ) * d;
+        /*float spreadRadius = 2.0f;
+        float spreadAngle = 30 * i;*/
 
-        // ---------------
+        float spreadRadius = (float) GetRandomValue( 1, 5 ) / 2.0f;
+        float spreadAngle = (float) GetRandomValue( 0, 360 ) * i;
+
+        // first rotation
+        cPos.y += sin( DEG2RAD * spreadAngle ) * spreadRadius;
+        cPos.z += cos( DEG2RAD * spreadAngle ) * spreadRadius;
+
+        // second rotation
+        float c1 = cPos.x - centralTraget.x;
+        float c2 = cPos.z - centralTraget.z;
+        float centerRadius = sqrt( c1 * c1 + c2 * c2 );
+        float centerAngle = RAD2DEG * atan2( cPos.z - centralTraget.z, cPos.x - centralTraget.x );
+        cPos.x = centralTraget.x + cos( DEG2RAD * ( centerAngle - player->rotationHorizontalAngle ) ) * centerRadius;
+        cPos.z = centralTraget.z + sin( DEG2RAD * ( centerAngle - player->rotationHorizontalAngle ) ) * centerRadius;
+
+        //DrawSphere( cPos, 0.5, BLACK );
 
         Ray ray = getPlayerToVector3Ray( &gw->player, cPos );
         hitCounter = 0;

@@ -441,21 +441,21 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
 void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayCollision *mirc, Color bulletColor ) {
     
     if ( player->currentAmmo > 0 ) {
-        
         for ( int i = 0; i < mirc->quantity; i++ ) {
-            
+
             IdentifiedRayCollision *irc = &mirc->irCollisions[i];
-            playerShotHandgun( gw, player, irc, bulletColor );
-            /*Enemy *enemyShot = NULL;
+            //playerShotHandgun( gw, player, irc, bulletColor );
+
+            Enemy *enemyShot = NULL;
             bool createBulletWorld = true;
             player->currentAmmo--;
 
-            for ( int j = 0; j < gw->enemyQuantity; j++ ) {
+            for ( int i = 0; i < gw->enemyQuantity; i++ ) {
 
-                Enemy *enemy = &gw->enemies[j];
-                
+                Enemy *enemy = &gw->enemies[i];
+
                 if ( enemy->state == ENEMY_STATE_ALIVE && 
-                     enemy->id == irc->entityId ) {
+                        enemy->id == irc->entityId ) {
                     
                     enemy->currentHp--;
                     enemy->showHpBar = true;
@@ -483,10 +483,9 @@ void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayColl
                     gw->collidedBulletCount++;
                 }
 
-            }*/
+            }
 
         }
-        
     }
 
 }

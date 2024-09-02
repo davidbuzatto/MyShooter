@@ -1,7 +1,11 @@
 - Finalizar tiros usando shotgun
-  - Angulação;
   - Balas fantasmas;
+- Tamanho da balas;
+- Cor das balas;
 - Calcular hits apenas quando atirar;
+- Dano por bala;
+- Som dos tiros;
+- Diferenciar powerup de munição;
 - Iluminação?
 - Ajustar movimentação com o mouse e teclas <- melhorar mira com o mouse.
 - Criar novos tipos de armas.
