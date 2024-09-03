@@ -5,5 +5,5 @@
 #include "Types.h"
 #include "raylib.h"
 
-Bullet createBullet( Vector3 pos, Color color );
+Bullet createBullet( Vector3 pos, Color color, float radius );
 void drawBullet( Bullet *bullet );

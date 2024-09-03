@@ -17,11 +17,16 @@ void loadResourcesResourceManager( void ) {
     //rm.textureExample = LoadTexture( "resources/images/mario.png" );
     //rm.soundExample = LoadSound( "resources/sfx/powerUp.wav" );
     //rm.musicExample = LoadMusicStream( "resources/musics/overworld1.ogg" );
+    rm.handgunSound = LoadSound( "resources/sfx/handgun.wav" );
+    rm.submachinegunSound = LoadSound( "resources/sfx/submachinegun.wav" );
+    rm.shotgunSound = LoadSound( "resources/sfx/shotgun.wav" );
 }
 
 void unloadResourcesResourceManager( void ) {
     //UnloadTexture( rm.textureExample );
-    //UnloadSound( rm.soundExample );
+    UnloadSound( rm.handgunSound );
+    UnloadSound( rm.submachinegunSound );
+    UnloadSound( rm.shotgunSound );
     //UnloadMusicStream( rm.musicExample );
     unloadModelsResourceManager();
 }

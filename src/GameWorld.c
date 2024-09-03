@@ -174,11 +174,11 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
         updateCameraTarget( gw, &gw->player );
         updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
 
-        if ( player->weaponType == PLAYER_WEAPON_TYPE_SHOTGUN ) {
+        /*if ( player->currentWeapon->type == WEAPON_TYPE_SHOTGUN ) {
             currentMultipleHit = resolveMultipleHitsWorld( gw );
         } else {
             currentHit = resolveHitsWorld( gw );
-        }
+        }*/
 
     }
 
@@ -223,12 +223,12 @@ void drawGameWorld( GameWorld *gw ) {
         drawBlock( &gw->nearWall );
     }
 
-    Player *player = &gw->player;
-    if ( player->weaponType == PLAYER_WEAPON_TYPE_SHOTGUN ) {
+    /*Player *player = &gw->player;
+    if ( player->currentWeapon->type == WEAPON_TYPE_SHOTGUN ) {
         currentMultipleHit = resolveMultipleHitsWorld( gw );
     } else {
         currentHit = resolveHitsWorld( gw );
-    }
+    }*/
 
     EndMode3D();
 
@@ -256,11 +256,12 @@ void drawReticle( GameWorld *gw, CameraType cameraType, PlayerWeaponState weapon
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
 
         Vector2 v = {0};
+        IdentifiedRayCollision reticleHit = resolveHitsWorld( gw );
 
-        if ( currentHit.entityType == ENTITY_TYPE_NONE ) {
+        if ( reticleHit.entityType == ENTITY_TYPE_NONE ) {
             v = GetWorldToScreen( gw->camera.target, gw->camera );
         } else {
-            v = GetWorldToScreen( currentHit.collision.point, gw->camera );
+            v = GetWorldToScreen( reticleHit.collision.point, gw->camera );
         }
 
         Color reticleColor = weaponState == PLAYER_WEAPON_STATE_READY ? RED : BLACK;
@@ -633,14 +634,16 @@ void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cam
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
         if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
+            currentHit = resolveHitsWorld( gw );
+            playerShotMachinegun( gw, player, &currentHit );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
     } else {
         if ( IsKeyDown( KEY_LEFT_ALT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
+            currentHit = resolveHitsWorld( gw );
+            playerShotMachinegun( gw, player, &currentHit );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
@@ -688,23 +691,23 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
 
             player->weaponState = PLAYER_WEAPON_STATE_READY;
 
-            switch ( player->weaponType ) {
-                case PLAYER_WEAPON_TYPE_HANDGUN:
+            switch ( player->currentWeapon->type ) {
+                case WEAPON_TYPE_HANDGUN:
                     if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        //playerShotHandgun( gw, player, &currentHit, gw->bulletColor );
-                        playerShotHandgun( gw, player, &currentHit, BLACK );
+                        currentHit = resolveHitsWorld( gw );
+                        playerShotHandgun( gw, player, &currentHit );
                     }
                     break;
-                case PLAYER_WEAPON_TYPE_SUBMACHINEGUN:
+                case WEAPON_TYPE_SUBMACHINEGUN:
                     if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        //playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
-                        playerShotMachinegun( gw, player, &currentHit, gw->bulletColor );
+                        currentHit = resolveHitsWorld( gw );
+                        playerShotMachinegun( gw, player, &currentHit );
                     }
                     break;
-                case PLAYER_WEAPON_TYPE_SHOTGUN:
+                case WEAPON_TYPE_SHOTGUN:
                     if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        //playerShotShotgun( gw, player, &currentMultipleHit, gw->bulletColor );
-                        playerShotShotgun( gw, player, &currentMultipleHit, GREEN );
+                        currentMultipleHit = resolveMultipleHitsWorld( gw );
+                        playerShotShotgun( gw, player, &currentMultipleHit );
                     }
                     break;
             }
@@ -714,8 +717,20 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
         }
 
         if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_FACE_UP ) ) {
-            player->weaponType++;
-            player->weaponType %= WEAPON_TYPE_QUANTITY;
+            int currentWeaponType = player->currentWeapon->type;
+            currentWeaponType++;
+            currentWeaponType %= WEAPON_TYPE_QUANTITY;
+            switch ( currentWeaponType ) {
+                case WEAPON_TYPE_HANDGUN:
+                    player->currentWeapon = &player->handgun;
+                    break;
+                case WEAPON_TYPE_SUBMACHINEGUN:
+                    player->currentWeapon = &player->submachinegun;
+                    break;
+                case WEAPON_TYPE_SHOTGUN:
+                    player->currentWeapon = &player->shotgun;
+                    break;
+            }
         }
 
     }
@@ -1098,19 +1113,12 @@ void resetGameWorld( GameWorld *gw ) {
 
 void drawDebugInfo( GameWorld *gw ) {
 
-    char weaponType[20];
-    switch ( gw->player.weaponType ) {
-        case PLAYER_WEAPON_TYPE_HANDGUN: strcpy( weaponType, "handgun" ); break;
-        case PLAYER_WEAPON_TYPE_SUBMACHINEGUN: strcpy( weaponType, "smg" ); break;
-        case PLAYER_WEAPON_TYPE_SHOTGUN: strcpy( weaponType, "shotgun" ); break;
-    }
-
     DrawFPS( 10, 10 );
     DrawText( TextFormat( "player: x=%.1f, y=%.1f, z=%.1f", gw->player.pos.x, gw->player.pos.y, gw->player.pos.z ), 10, 30, 20, BLACK );
     DrawText( TextFormat( "active enemies: %d", gw->enemyQuantity ), 10, 50, 20, BLACK );
     DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 70, 20, BLACK );
     DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 90, 20, BLACK );
-    DrawText( TextFormat( "weapon type: %s", weaponType ), 10, 110, 20, BLACK );
+    DrawText( TextFormat( "weapon type: %s", gw->player.currentWeapon->name ), 10, 110, 20, BLACK );
     showCameraInfo( &gw->camera, 10, 130 );
 
     // draw collision points with raycast (debug)
@@ -1261,6 +1269,7 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
         .y = (float) playerY,
         .z = playerZ
     });
+    gw->player.currentWeapon = &gw->player.handgun;
     gw->player.rotationHorizontalAngle = playerStartAngle;
 
     for ( int i = 0; i < eCounter; i++ ) {

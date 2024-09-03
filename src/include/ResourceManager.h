@@ -22,12 +22,16 @@ typedef struct ResourceManager {
     bool playerModelCreated;
     bool powerUpModelCreated;
     bool enemyModelCreated;
-    bool obstacleModelCreated; // ok
-    bool groundModelCreated;   //ok
+    bool obstacleModelCreated;
+    bool groundModelCreated;
 
     /*Texture2D textureExample;
     Sound soundExample;
     Music musicExample;*/
+
+    Sound handgunSound;
+    Sound submachinegunSound;
+    Sound shotgunSound;
 
 } ResourceManager;
 

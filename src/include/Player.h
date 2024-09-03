@@ -17,9 +17,9 @@ PlayerCollisionType checkCollisionPlayerEnemy( Player *player, Enemy *enemy, boo
 PlayerCollisionType checkCollisionPlayerPowerUp( Player *player, PowerUp *powerUp );
 BoundingBox getPlayerBoundingBox( Player *player );
 void createPlayerModel( Player *player );
-void playerShotHandgun( GameWorld *gw,Player *player, IdentifiedRayCollision *irc, Color bulletColor );
-void playerShotMachinegun( GameWorld *gw,Player *player, IdentifiedRayCollision *irc, Color bulletColor );
-void playerShotShotgun( GameWorld *gw,Player *player, MultipleIdentifiedRayCollision *mirc, Color bulletColor );
+void playerShotHandgun( GameWorld *gw,Player *player, IdentifiedRayCollision *irc );
+void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc );
+void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayCollision *mirc );
 void playerAcquirePowerUp( Player *player, PowerUp *powerUp );
 Ray getPlayerToEnemyRay( Player *player, Enemy *enemy );
 Ray getPlayerToVector3Ray( Player *player, Vector3 v3 );

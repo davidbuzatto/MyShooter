@@ -62,11 +62,11 @@ typedef enum PlayerWeaponState {
     PLAYER_WEAPON_STATE_READY
 } PlayerWeaponState;
 
-typedef enum PlayerWeaponType {
-    PLAYER_WEAPON_TYPE_HANDGUN,
-    PLAYER_WEAPON_TYPE_SUBMACHINEGUN,
-    PLAYER_WEAPON_TYPE_SHOTGUN
-} PlayerWeaponType;
+typedef enum WeaponType {
+    WEAPON_TYPE_HANDGUN,
+    WEAPON_TYPE_SUBMACHINEGUN,
+    WEAPON_TYPE_SHOTGUN
+} WeaponType;
 
 typedef enum PowerUpType {
     POWER_UP_TYPE_HP,
@@ -126,6 +126,17 @@ typedef struct Bullet {
     float vAngle;
 } Bullet;
 
+typedef struct Weapon {
+    const char *name;
+    WeaponType type;
+    int ammo;
+    int ammoPerPowerup;
+    int bulletDamage;
+    Color bulletColor;
+    float bulletRadius;
+    Sound bulletSound;
+} Weapon;
+
 typedef struct Player {
 
     Vector3 pos;
@@ -178,8 +189,13 @@ typedef struct Player {
     int currentHp;
     bool immortal;
     
-    int currentAmmo;
-    PlayerWeaponType weaponType;
+    /*int currentAmmo;
+    WeaponType weaponType;*/
+
+    Weapon *currentWeapon;
+    Weapon handgun;
+    Weapon submachinegun;
+    Weapon shotgun;
 
     PlayerState state;
 
@@ -263,7 +279,7 @@ typedef struct Enemy {
 
     int damageOnContact;
 
-    Bullet collidedBullets[5];
+    Bullet collidedBullets[10];
     int maxCollidedBullets;
     int collidedBulletCount;
 

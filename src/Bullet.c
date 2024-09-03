@@ -9,12 +9,12 @@
 #include "Bullet.h"
 #include "raylib.h"
 
-Bullet createBullet( Vector3 pos, Color color ) {
+Bullet createBullet( Vector3 pos, Color color, float radius ) {
 
     Bullet bullet = {
         .id = entityIdCounter++,
         .pos = pos,
-        .radius = 0.2f,
+        .radius = radius,
         .color = color,
         .hDistance = 0.0f,
         .vDistance = 0.0f,

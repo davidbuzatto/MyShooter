@@ -16,6 +16,6 @@ BoundingBox getEnemyBoundingBox( Enemy *enemy );
 void createEnemies( GameWorld *gw, Vector3 *positions, int enemyQuantity, Color color, Color eyeColor );
 void createEnemiesModel( Enemy *enemies, int enemyQuantity );
 void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines );
-void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor );
+void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor, float bulletRadius );
 Matrix getEnemyTransformMatrix( Enemy *enemy );
 void cleanDeadEnemies( GameWorld *gw );

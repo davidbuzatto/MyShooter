@@ -74,8 +74,39 @@ Player createPlayer( Vector3 pos ) {
         .currentHp = 100,
         .immortal = false,
 
-        .currentAmmo = 200,
-        .weaponType = PLAYER_WEAPON_TYPE_SHOTGUN,
+        /*.currentAmmo = 200,
+        .weaponType = WEAPON_TYPE_SHOTGUN,*/
+
+        .handgun = {
+            .name = "handgun",
+            .type = WEAPON_TYPE_HANDGUN,
+            .ammo = 50,
+            .ammoPerPowerup = 10,
+            .bulletDamage = 20,
+            .bulletColor = BLACK,
+            .bulletRadius = 0.2f,
+            .bulletSound = rm.handgunSound
+        },
+        .submachinegun = {
+            .name = "submachinegun",
+            .type = WEAPON_TYPE_SUBMACHINEGUN,
+            .ammo = 200,
+            .ammoPerPowerup = 100,
+            .bulletDamage = 10,
+            .bulletColor = WHITE,
+            .bulletRadius = 0.1f,
+            .bulletSound = rm.submachinegunSound
+        },
+        .shotgun = {
+            .name = "shotgun",
+            .type = WEAPON_TYPE_SHOTGUN,
+            .ammo = 10,
+            .ammoPerPowerup = 5,
+            .bulletDamage = 10,
+            .bulletColor = BLACK,
+            .bulletRadius = 0.1f,
+            .bulletSound = rm.shotgunSound
+        },
 
         .state = PLAYER_STATE_ALIVE
 
@@ -135,8 +166,7 @@ void drawPlayerHud( Player *player ) {
         DrawText( "* immortal *", xMargin * 2, h - yMargin - 46, 20, BLACK );
     }
 
-    DrawText( TextFormat( "Ammo: %d", player->currentAmmo ), xMargin, h - yMargin - 20, 20, player->currentAmmo > 0 ? BLACK : MAROON );
-
+    DrawText( TextFormat( "Ammo: %d", player->currentWeapon->ammo ), xMargin, h - yMargin - 20, 20, player->currentWeapon->ammo > 0 ? BLACK : MAROON );
 
 }
 
@@ -335,13 +365,21 @@ void createPlayerModel( Player *player ) {
 
 }
 
-void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc, Color bulletColor ) {
+void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc ) {
     
-    if ( player->currentAmmo > 0 ) {
+    Weapon *weapon = player->currentWeapon;
+
+    if ( weapon->ammo > 0 ) {
         
+        PlaySound( weapon->bulletSound );
+
+        int bulletDamage = weapon->bulletDamage;
+        Color bulletColor = weapon->bulletColor;
+        float bulletRadius = weapon->bulletRadius;
+
         Enemy *enemyShot = NULL;
         bool createBulletWorld = true;
-        player->currentAmmo--;
+        weapon->ammo--;
 
         for ( int i = 0; i < gw->enemyQuantity; i++ ) {
 
@@ -350,11 +388,11 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
             if ( enemy->state == ENEMY_STATE_ALIVE && 
                     enemy->id == irc->entityId ) {
                 
-                enemy->currentHp--;
+                enemy->currentHp -= bulletDamage;
                 enemy->showHpBar = true;
                 enemyShot = enemy;
 
-                if ( enemy->currentHp == 0 ) {
+                if ( enemy->currentHp <= 0 ) {
                     enemy->state = ENEMY_STATE_DEAD;
                     enemyShot = NULL;
                     createBulletWorld = false;
@@ -370,9 +408,9 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
         if ( irc->entityType != ENTITY_TYPE_NONE ) {
 
             if ( enemyShot != NULL ) {
-                addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
-            } else if ( createBulletWorld ) {
-                gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor );
+                addBulletToEnemy( enemyShot, irc->collision.point, bulletColor, bulletRadius );
+            } else if ( createBulletWorld && irc->entityType != ENTITY_TYPE_ENEMY ) {
+                gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor, bulletRadius );
                 gw->collidedBulletCount++;
             }
 
@@ -382,8 +420,9 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
 
 }
 
-void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc, Color bulletColor ) {
+void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc ) {
     
+    Weapon *weapon = player->currentWeapon;
     float delta = GetFrameTime();
     player->timeToNextShotCounter += delta;
 
@@ -391,11 +430,17 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
 
         player->timeToNextShotCounter = 0.0f;
 
-        if ( player->currentAmmo > 0 ) {
+        if ( weapon->ammo > 0 ) {
             
+            PlaySound( weapon->bulletSound );
+
+            int bulletDamage = weapon->bulletDamage;
+            Color bulletColor = weapon->bulletColor;
+            float bulletRadius = weapon->bulletRadius;
+
             Enemy *enemyShot = NULL;
             bool createBulletWorld = true;
-            player->currentAmmo--;
+            weapon->ammo--;
 
             for ( int i = 0; i < gw->enemyQuantity; i++ ) {
 
@@ -404,11 +449,11 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
                 if ( enemy->state == ENEMY_STATE_ALIVE && 
                      enemy->id == irc->entityId ) {
                     
-                    enemy->currentHp--;
+                    enemy->currentHp -= bulletDamage;
                     enemy->showHpBar = true;
                     enemyShot = enemy;
 
-                    if ( enemy->currentHp == 0 ) {
+                    if ( enemy->currentHp <= 0 ) {
                         enemy->state = ENEMY_STATE_DEAD;
                         enemyShot = NULL;
                         createBulletWorld = false;
@@ -424,9 +469,9 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
             if ( irc->entityType != ENTITY_TYPE_NONE ) {
 
                 if ( enemyShot != NULL ) {
-                    addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
-                } else if ( createBulletWorld ) {
-                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor );
+                    addBulletToEnemy( enemyShot, irc->collision.point, bulletColor, bulletRadius );
+                } else if ( createBulletWorld && irc->entityType != ENTITY_TYPE_ENEMY ) {
+                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor, bulletRadius );
                     gw->collidedBulletCount++;
                 }
 
@@ -438,17 +483,26 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
 
 }
 
-void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayCollision *mirc, Color bulletColor ) {
+void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayCollision *mirc ) {
     
-    if ( player->currentAmmo > 0 ) {
+    Weapon *weapon = player->currentWeapon;
+
+    if ( weapon->ammo > 0 ) {
+
+        PlaySound( weapon->bulletSound );
+
+        int bulletDamage = weapon->bulletDamage;
+        Color bulletColor = weapon->bulletColor;
+        float bulletRadius = weapon->bulletRadius;
+
+        weapon->ammo--;
+
         for ( int i = 0; i < mirc->quantity; i++ ) {
 
             IdentifiedRayCollision *irc = &mirc->irCollisions[i];
-            //playerShotHandgun( gw, player, irc, bulletColor );
 
             Enemy *enemyShot = NULL;
             bool createBulletWorld = true;
-            player->currentAmmo--;
 
             for ( int i = 0; i < gw->enemyQuantity; i++ ) {
 
@@ -457,11 +511,11 @@ void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayColl
                 if ( enemy->state == ENEMY_STATE_ALIVE && 
                         enemy->id == irc->entityId ) {
                     
-                    enemy->currentHp--;
+                    enemy->currentHp -= bulletDamage;
                     enemy->showHpBar = true;
                     enemyShot = enemy;
 
-                    if ( enemy->currentHp == 0 ) {
+                    if ( enemy->currentHp <= 0 ) {
                         enemy->state = ENEMY_STATE_DEAD;
                         enemyShot = NULL;
                         createBulletWorld = false;
@@ -477,9 +531,9 @@ void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayColl
             if ( irc->entityType != ENTITY_TYPE_NONE ) {
 
                 if ( enemyShot != NULL ) {
-                    addBulletToEnemy( enemyShot, irc->collision.point, bulletColor );
-                } else if ( createBulletWorld ) {
-                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor );
+                    addBulletToEnemy( enemyShot, irc->collision.point, bulletColor, bulletRadius );
+                } else if ( createBulletWorld && irc->entityType != ENTITY_TYPE_ENEMY ) {
+                    gw->collidedBullets[gw->collidedBulletCount%gw->maxCollidedBullets] = createBullet( irc->collision.point, bulletColor, bulletRadius );
                     gw->collidedBulletCount++;
                 }
 
@@ -509,7 +563,7 @@ void playerAcquirePowerUp( Player *player, PowerUp *powerUp ) {
                 break;
 
             case POWER_UP_TYPE_AMMO:
-                player->currentAmmo += 50;
+                player->currentWeapon->ammo += player->currentWeapon->ammoPerPowerup;
                 powerUp->state = POWER_UP_STATE_CONSUMED;
                 break;
 

@@ -62,8 +62,8 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
         .positionState = ENEMY_POSITION_STATE_ON_GROUND,
         .state = ENEMY_STATE_ALIVE,
 
-        .maxHp = 5,
-        .currentHp = 5,
+        .maxHp = 100,
+        .currentHp = 100,
 
         .detectedByPlayer = false,
         .showHpBar = false,
@@ -71,7 +71,7 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
         .hpBarShowCounter = 0.0f,
         .damageOnContact = 1,
 
-        .maxCollidedBullets = 5,
+        .maxCollidedBullets = 10,
         .collidedBulletCount = 0
 
     };
@@ -390,10 +390,10 @@ void setEnemyDetectedByPlayer( Enemy *enemy, Player *player, bool showLines ) {
 
 }
 
-void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor ) {
+void addBulletToEnemy( Enemy *enemy, Vector3 bulletPos, Color bulletColor, float bulletRadius ) {
 
     int i = enemy->collidedBulletCount % enemy->maxCollidedBullets;
-    Bullet bullet = createBullet( bulletPos, bulletColor );
+    Bullet bullet = createBullet( bulletPos, bulletColor, bulletRadius );
     
     float dX = enemy->pos.x - bulletPos.x;
     float dY = enemy->pos.y - bulletPos.y;
