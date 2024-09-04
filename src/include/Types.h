@@ -171,6 +171,9 @@ typedef struct Player {
     float timeToNextShot;
     float timeToNextShotCounter;
 
+    float timeToNextStep;
+    float timeToNextStepCounter;
+
     // cp = collision probe
     Block cpLeft;
     Block cpRight;
@@ -198,6 +201,7 @@ typedef struct Player {
     Weapon shotgun;
 
     PlayerState state;
+    bool running;
 
 } Player;
 
@@ -282,6 +286,8 @@ typedef struct Enemy {
     Bullet collidedBullets[10];
     int maxCollidedBullets;
     int collidedBulletCount;
+
+    Sound deathSound;
 
 } Enemy;
 

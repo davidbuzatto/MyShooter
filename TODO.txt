@@ -1,6 +1,4 @@
-- Finalizar GUI
-  - Arma atual e munição
-  - HUD
-  - Mudar opções de exibição
+- Música de fundo.
+- Música de fundo.
+- Ataque dos inimigos.
 - Iluminação?
-- Ajustar movimentação com o mouse e teclas <- melhorar mira com o mouse.

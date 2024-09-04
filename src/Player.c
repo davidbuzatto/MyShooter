@@ -14,6 +14,8 @@
 #include "raylib.h"
 #include "utils.h"
 
+const int WEAPON_TYPE_QUANTITY = 3;
+
 Player createPlayer( Vector3 pos ) {
 
     float cpThickness = 1.0f;
@@ -58,6 +60,9 @@ Player createPlayer( Vector3 pos ) {
         .timeToNextShot = 0.1f,
         .timeToNextShotCounter = 0.0f,
 
+        .timeToNextStep = 0.3f,
+        .timeToNextStepCounter = 0.0f,
+
         .cpLeft = { .visible = true },
         .cpRight = { .visible = true  },
         .cpBottom = { .visible = true },
@@ -92,7 +97,7 @@ Player createPlayer( Vector3 pos ) {
             .type = WEAPON_TYPE_SUBMACHINEGUN,
             .ammo = 200,
             .ammoPerPowerup = 100,
-            .bulletDamage = 10,
+            .bulletDamage = 15,
             .bulletColor = WHITE,
             .bulletRadius = 0.1f,
             .bulletSound = rm.submachinegunSound
@@ -108,7 +113,8 @@ Player createPlayer( Vector3 pos ) {
             .bulletSound = rm.shotgunSound
         },
 
-        .state = PLAYER_STATE_ALIVE
+        .state = PLAYER_STATE_ALIVE,
+        .running = false
 
     };
 
@@ -166,7 +172,7 @@ void drawPlayerHud( Player *player ) {
         DrawText( "* immortal *", xMargin * 2, h - yMargin - 46, 20, BLACK );
     }
 
-    DrawText( TextFormat( "Ammo: %d", player->currentWeapon->ammo ), xMargin, h - yMargin - 20, 20, player->currentWeapon->ammo > 0 ? BLACK : MAROON );
+    DrawText( TextFormat( "%s: %d", player->currentWeapon->name, player->currentWeapon->ammo ), xMargin, h - yMargin - 20, 20, player->currentWeapon->ammo > 0 ? BLACK : MAROON );
 
 }
 
@@ -176,6 +182,7 @@ void updatePlayer( Player *player, float delta ) {
     if ( player->pos.x == player->lastPos.x &&
          player->pos.z == player->lastPos.z ) {
         player->speed = player->walkingSpeed;
+        player->running = false;
     }
 
     player->lastPos = player->pos;
@@ -183,6 +190,21 @@ void updatePlayer( Player *player, float delta ) {
     player->pos.x += player->vel.x * delta;
     player->pos.y += player->vel.y * delta;
     player->pos.z += player->vel.z * delta;
+
+    if ( player->vel.x != 0.0f || player->vel.z != 0.0f ) {
+        if ( player->timeToNextStepCounter >= player->timeToNextStep ) {
+            if ( player->positionState == PLAYER_POSITION_STATE_ON_GROUND ) {
+                PlaySound( rm.playerStepSound );
+                player->timeToNextStepCounter = 0.0f;
+            }
+        } else {
+            if ( player->running ) {
+                player->timeToNextStepCounter += delta * 1.5f;
+            } else {
+                player->timeToNextStepCounter += delta;
+            }
+        }
+    }
 
     player->vel.y -= GRAVITY * delta;
 
@@ -253,6 +275,7 @@ void updatePlayerCollisionProbes( Player *player ) {
 
 void jumpPlayer( Player *player ) {
     if ( player->positionState == PLAYER_POSITION_STATE_ON_GROUND ) {
+        PlaySound( rm.playerJumpSound );
         player->vel.y = player->jumpSpeed;
     }
 }
@@ -365,6 +388,62 @@ void createPlayerModel( Player *player ) {
 
 }
 
+void playerShotUsingGamepad( GameWorld *gw, Player *player, int gamepadId ) {
+    playerShot( gw, player, true, gamepadId );
+}
+
+void playerShotUsingMouse( GameWorld *gw, Player *player ) {
+    playerShot( gw, player, false, 0 );
+}
+
+void playerShot( GameWorld *gw, Player *player, bool useGamepad, int gamepadId ) {
+
+    if ( useGamepad ) {
+        switch ( player->currentWeapon->type ) {
+            case WEAPON_TYPE_HANDGUN:
+                if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                    IdentifiedRayCollision currentHit = resolveHitsWorld( gw );
+                    playerShotHandgun( gw, player, &currentHit );
+                }
+                break;
+            case WEAPON_TYPE_SUBMACHINEGUN:
+                if ( IsGamepadButtonDown( gamepadId, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                    IdentifiedRayCollision currentHit = resolveHitsWorld( gw );
+                    playerShotMachinegun( gw, player, &currentHit );
+                }
+                break;
+            case WEAPON_TYPE_SHOTGUN:
+                if ( IsGamepadButtonPressed( gamepadId, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
+                    MultipleIdentifiedRayCollision currentMultipleHit = resolveMultipleHitsWorld( gw );
+                    playerShotShotgun( gw, player, &currentMultipleHit );
+                }
+                break;
+        }
+    } else {
+        switch ( player->currentWeapon->type ) {
+            case WEAPON_TYPE_HANDGUN:
+                if ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) ) {
+                    IdentifiedRayCollision currentHit = resolveHitsWorld( gw );
+                    playerShotHandgun( gw, player, &currentHit );
+                }
+                break;
+            case WEAPON_TYPE_SUBMACHINEGUN:
+                if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
+                    IdentifiedRayCollision currentHit = resolveHitsWorld( gw );
+                    playerShotMachinegun( gw, player, &currentHit );
+                }
+                break;
+            case WEAPON_TYPE_SHOTGUN:
+                if ( IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) ) {
+                    MultipleIdentifiedRayCollision currentMultipleHit = resolveMultipleHitsWorld( gw );
+                    playerShotShotgun( gw, player, &currentMultipleHit );
+                }
+                break;
+        }
+    }
+
+}
+
 void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc ) {
     
     Weapon *weapon = player->currentWeapon;
@@ -394,6 +473,7 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
 
                 if ( enemy->currentHp <= 0 ) {
                     enemy->state = ENEMY_STATE_DEAD;
+                    PlaySound( enemy->deathSound );
                     enemyShot = NULL;
                     createBulletWorld = false;
                     cleanDeadEnemies( gw );
@@ -416,6 +496,8 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
 
         }
         
+    } else {
+        PlaySound( rm.noAmmoWarningSound );
     }
 
 }
@@ -423,8 +505,7 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
 void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision *irc ) {
     
     Weapon *weapon = player->currentWeapon;
-    float delta = GetFrameTime();
-    player->timeToNextShotCounter += delta;
+    player->timeToNextShotCounter += GetFrameTime();
 
     if ( player->timeToNextShotCounter >= player->timeToNextShot ) {
 
@@ -455,6 +536,7 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
 
                     if ( enemy->currentHp <= 0 ) {
                         enemy->state = ENEMY_STATE_DEAD;
+                        PlaySound( enemy->deathSound );
                         enemyShot = NULL;
                         createBulletWorld = false;
                         cleanDeadEnemies( gw );
@@ -477,6 +559,8 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
 
             }
 
+        } else {
+            PlaySound( rm.noAmmoWarningSound );
         }
 
     }
@@ -517,6 +601,7 @@ void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayColl
 
                     if ( enemy->currentHp <= 0 ) {
                         enemy->state = ENEMY_STATE_DEAD;
+                        PlaySound( enemy->deathSound );
                         enemyShot = NULL;
                         createBulletWorld = false;
                         cleanDeadEnemies( gw );
@@ -540,8 +625,28 @@ void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayColl
             }
 
         }
+
+    } else {
+        PlaySound( rm.noAmmoWarningSound );
     }
 
+}
+
+void playerSwapWeapon( Player *player ) {
+    int currentWeaponType = player->currentWeapon->type;
+    currentWeaponType++;
+    currentWeaponType %= WEAPON_TYPE_QUANTITY;
+    switch ( currentWeaponType ) {
+        case WEAPON_TYPE_HANDGUN:
+            player->currentWeapon = &player->handgun;
+            break;
+        case WEAPON_TYPE_SUBMACHINEGUN:
+            player->currentWeapon = &player->submachinegun;
+            break;
+        case WEAPON_TYPE_SHOTGUN:
+            player->currentWeapon = &player->shotgun;
+            break;
+    }
 }
 
 void playerAcquirePowerUp( Player *player, PowerUp *powerUp ) {
@@ -553,6 +658,7 @@ void playerAcquirePowerUp( Player *player, PowerUp *powerUp ) {
             case POWER_UP_TYPE_HP:
 
                 if ( player->currentHp != player->maxHp ) {
+                    PlaySound( rm.hpPowerUpSound );
                     player->currentHp += 20;
                     if ( player->currentHp > player->maxHp ) {
                         player->currentHp = player->maxHp;
@@ -563,6 +669,7 @@ void playerAcquirePowerUp( Player *player, PowerUp *powerUp ) {
                 break;
 
             case POWER_UP_TYPE_AMMO:
+                PlaySound( rm.ammoPowerUpSound );
                 player->currentWeapon->ammo += player->currentWeapon->ammoPerPowerup;
                 powerUp->state = POWER_UP_STATE_CONSUMED;
                 break;

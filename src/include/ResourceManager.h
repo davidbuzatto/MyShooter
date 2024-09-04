@@ -33,6 +33,18 @@ typedef struct ResourceManager {
     Sound submachinegunSound;
     Sound shotgunSound;
 
+    Sound enemyDeathSound01;
+    Sound enemyDeathSound02;
+    Sound enemyDeathSound03;
+
+    Sound noAmmoWarningSound;
+
+    Sound hpPowerUpSound;
+    Sound ammoPowerUpSound;
+
+    Sound playerJumpSound;
+    Sound playerStepSound;
+
 } ResourceManager;
 
 /**

@@ -86,6 +86,7 @@ void initGameWindow( GameWindow *gameWindow ) {
         }
 
         InitWindow( gameWindow->width, gameWindow->height, gameWindow->title );
+        SetWindowIcon( LoadImage( "resources/icon.png" ) );
 
         if ( gameWindow->initAudio ) {
             InitAudioDevice();

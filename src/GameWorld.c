@@ -36,7 +36,6 @@ int entityIdCounter = 1;
 
 const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 2;
-const int WEAPON_TYPE_QUANTITY = 3;
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
 bool loadTestMap = true;
@@ -48,17 +47,20 @@ const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE
 //const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
 
 // globals
-bool showDebugInfo = true;
+bool showDebugInfo = false;
 bool drawWalls = true;
 
 IdentifiedRayCollision hits[MAX_HITS];
-IdentifiedRayCollision currentHit = {0};
-MultipleIdentifiedRayCollision currentMultipleHit = {0};
 int hitCounter = 0;
 
 float xCam;
 float yCam;
 float zCam;
+
+int lastMouseX = 0;
+int lastMouseY = 0;
+int mouseMoveOffsetX = 0;
+int mouseMoveOffsetY = 0;
 
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
@@ -290,22 +292,39 @@ void updateCameraTarget( GameWorld *gw, Player *player ) {
     //float sinV = -sin( DEG2RAD * player->rotationVerticalAngle );
 
     switch ( gw->cameraType ) {
+
         case CAMERA_TYPE_THIRD_PERSON_FIXED:
             gw->camera.target = player->pos;
             break;
+
         case CAMERA_TYPE_FIRST_PERSON:
+
             if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD ) {
-                Vector2 mouseDelta = GetMouseDelta();
-                player->rotationHVel = mouseDelta.x * delta * -player->rotationSpeed * 10;
-                player->rotationVVel = mouseDelta.y * delta * player->rotationSpeed * 10;
+
+                int mouseX = GetMouseX();
+                int mouseY = GetMouseY();
+
+                mouseMoveOffsetX = mouseX - lastMouseX;
+                mouseMoveOffsetY = mouseY - lastMouseY;
+
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+
+                player->rotationHVel = mouseMoveOffsetX * delta * -player->rotationSpeed * 10;
+                player->rotationVVel = mouseMoveOffsetY * delta * player->rotationSpeed * 10;
+
                 HideCursor();
+
             } else {
                 ShowCursor();
             }
+
             gw->camera.target.x = player->pos.x + cosH * FIRST_PERSON_CAMERA_TARGET_DIST;
             gw->camera.target.y = player->pos.y + cosV * FIRST_PERSON_CAMERA_TARGET_DIST;
             gw->camera.target.z = player->pos.z + sinH * FIRST_PERSON_CAMERA_TARGET_DIST;
+
             break;
+            
     }
 
 }
@@ -529,39 +548,35 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
     }
 
     if ( IsKeyPressed( KEY_THREE ) ) {
-        player->showWiresOnly = !player->showWiresOnly;
-    }
-
-    if ( IsKeyPressed( KEY_FOUR ) ) {
         player->showCollisionProbes = !player->showCollisionProbes;
     }
 
-    if ( IsKeyPressed( KEY_FIVE ) ) {
+    if ( IsKeyPressed( KEY_FOUR ) ) {
         for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
             gw->obstacles[i].renderTouchColor = !gw->obstacles[i].renderTouchColor;
         }
     }
 
-    if ( IsKeyPressed( KEY_R ) || 
+    if ( IsKeyPressed( KEY_ZERO ) || 
          ( IsGamepadAvailable( GAMEPAD_ID ) && IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) ) {
         resetGameWorld( gw );
     }
 
-    if ( IsKeyPressed( KEY_F ) ) {
+    if ( IsKeyPressed( KEY_FIVE ) ) {
         int ct = gw->cameraType + 1;
         gw->cameraType = ct % CAMERA_TYPE_QUANTITY;
     }
 
-    if ( IsKeyPressed( KEY_I ) ) {
+    if ( IsKeyPressed( KEY_SIX ) ) {
         player->immortal = !player->immortal;
     }
 
-    if ( IsKeyPressed( KEY_L ) ) {
+    if ( IsKeyPressed( KEY_SEVEN ) ) {
         loadTestMap = !loadTestMap;
         resetGameWorld( gw );
     }
 
-    if ( IsKeyPressed( KEY_K ) ) {
+    if ( IsKeyPressed( KEY_TAB ) ) {
         if ( gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ) {
             gw->playerInputType = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
         } else {
@@ -591,8 +606,10 @@ void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cam
 
     if ( IsKeyDown( KEY_LEFT_CONTROL ) ) {
         player->speed = player->runningSpeed;
+        player->running = true;
     } else {
         player->speed = player->walkingSpeed;
+        player->running = false;
     }
 
     if ( IsKeyDown( KEY_W ) ) {
@@ -631,19 +648,14 @@ void processPlayerInputByKeyboard( GameWorld *gw, Player *player, CameraType cam
         jumpPlayer( player );
     }
 
+    if ( IsMouseButtonPressed( MOUSE_BUTTON_RIGHT ) ) {
+        playerSwapWeapon( player );
+    }
+
     if ( cameraType == CAMERA_TYPE_FIRST_PERSON ) {
         if ( IsMouseButtonDown( MOUSE_BUTTON_LEFT ) ) {
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-            currentHit = resolveHitsWorld( gw );
-            playerShotMachinegun( gw, player, &currentHit );
-        } else {
-            player->weaponState = PLAYER_WEAPON_STATE_IDLE;
-        }
-    } else {
-        if ( IsKeyDown( KEY_LEFT_ALT ) ) {
-            player->weaponState = PLAYER_WEAPON_STATE_READY;
-            currentHit = resolveHitsWorld( gw );
-            playerShotMachinegun( gw, player, &currentHit );
+            playerShotUsingMouse( gw, player );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
@@ -664,6 +676,7 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
 
         if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_THUMB ) ) {
             player->speed = player->runningSpeed;
+            player->running = true;
         }
 
         if ( cameraType == CAMERA_TYPE_THIRD_PERSON_FIXED ) {
@@ -688,49 +701,14 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
         }
 
         if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_LEFT_TRIGGER_2 ) ) {
-
             player->weaponState = PLAYER_WEAPON_STATE_READY;
-
-            switch ( player->currentWeapon->type ) {
-                case WEAPON_TYPE_HANDGUN:
-                    if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        currentHit = resolveHitsWorld( gw );
-                        playerShotHandgun( gw, player, &currentHit );
-                    }
-                    break;
-                case WEAPON_TYPE_SUBMACHINEGUN:
-                    if ( IsGamepadButtonDown( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        currentHit = resolveHitsWorld( gw );
-                        playerShotMachinegun( gw, player, &currentHit );
-                    }
-                    break;
-                case WEAPON_TYPE_SHOTGUN:
-                    if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_TRIGGER_2 ) ) {
-                        currentMultipleHit = resolveMultipleHitsWorld( gw );
-                        playerShotShotgun( gw, player, &currentMultipleHit );
-                    }
-                    break;
-            }
-
+            playerShotUsingGamepad( gw, player, GAMEPAD_ID );
         } else {
             player->weaponState = PLAYER_WEAPON_STATE_IDLE;
         }
 
         if ( IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_RIGHT_FACE_UP ) ) {
-            int currentWeaponType = player->currentWeapon->type;
-            currentWeaponType++;
-            currentWeaponType %= WEAPON_TYPE_QUANTITY;
-            switch ( currentWeaponType ) {
-                case WEAPON_TYPE_HANDGUN:
-                    player->currentWeapon = &player->handgun;
-                    break;
-                case WEAPON_TYPE_SUBMACHINEGUN:
-                    player->currentWeapon = &player->submachinegun;
-                    break;
-                case WEAPON_TYPE_SHOTGUN:
-                    player->currentWeapon = &player->shotgun;
-                    break;
-            }
+            playerSwapWeapon( player );
         }
 
     }
@@ -943,8 +921,8 @@ void resolveCollisionPlayerPowerUp( Player *player, PowerUp *powerUp ) {
     
 }
 
-// returns the identifier of the closest enemy or zero if the collisions
-// are not against enemies or there was no collision
+// returns the identified collision of the closest entity or a zeroed collision
+// if there is not a detected collision
 IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
 
     Ray ray = getPlayerToVector3Ray( &gw->player, gw->camera.target );
@@ -1119,7 +1097,8 @@ void drawDebugInfo( GameWorld *gw ) {
     DrawText( TextFormat( "active power-ups: %d", gw->powerUpQuantity ), 10, 70, 20, BLACK );
     DrawText( TextFormat( "input type: %s", gw->playerInputType == GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD ? "gamepad" : "keyboard" ), 10, 90, 20, BLACK );
     DrawText( TextFormat( "weapon type: %s", gw->player.currentWeapon->name ), 10, 110, 20, BLACK );
-    showCameraInfo( &gw->camera, 10, 130 );
+    DrawText( TextFormat( "mouse offset: x=%d, y=%d", mouseMoveOffsetX, mouseMoveOffsetY ), 10, 130, 20, BLACK );
+    showCameraInfo( &gw->camera, 10, 150 );
 
     // draw collision points with raycast (debug)
     if ( gw->cameraType == CAMERA_TYPE_FIRST_PERSON ) {
@@ -1147,7 +1126,7 @@ void drawGameoverOverlay( void ) {
     int fontSizeDead = 60;
     int fontSizeReset = 20;
     const char *tDead = "YOU DIED!";
-    const char *tReset = "Start/<R> to Reset!";
+    const char *tReset = "Start/<0> to Reset!";
     int wDead = MeasureText( tDead, fontSizeDead );
     int wReset = MeasureText( tReset, fontSizeReset );
     DrawText( tDead, GetScreenWidth() / 2 - wDead / 2, GetScreenHeight() / 2 - fontSizeDead / 2 - 10, fontSizeDead, RED );

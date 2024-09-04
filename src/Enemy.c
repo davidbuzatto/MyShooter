@@ -90,6 +90,12 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
     enemy.cpFar.color = YELLOW;
     enemy.cpNear.color = WHITE;
 
+    switch ( GetRandomValue( 0, 2 ) ) {
+        case 0: enemy.deathSound = rm.enemyDeathSound01; break;
+        case 1: enemy.deathSound = rm.enemyDeathSound02; break;
+        case 2: enemy.deathSound = rm.enemyDeathSound03; break;
+    }
+
     return enemy;
 
 }

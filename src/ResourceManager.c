@@ -14,20 +14,42 @@
 ResourceManager rm = { 0 };
 
 void loadResourcesResourceManager( void ) {
+
     //rm.textureExample = LoadTexture( "resources/images/mario.png" );
-    //rm.soundExample = LoadSound( "resources/sfx/powerUp.wav" );
     //rm.musicExample = LoadMusicStream( "resources/musics/overworld1.ogg" );
+
     rm.handgunSound = LoadSound( "resources/sfx/handgun.wav" );
     rm.submachinegunSound = LoadSound( "resources/sfx/submachinegun.wav" );
     rm.shotgunSound = LoadSound( "resources/sfx/shotgun.wav" );
+
+    rm.enemyDeathSound01 = LoadSound( "resources/sfx/enemyDeath01.wav" );
+    rm.enemyDeathSound02 = LoadSound( "resources/sfx/enemyDeath02.wav" );
+    rm.enemyDeathSound03 = LoadSound( "resources/sfx/enemyDeath03.wav" );
+    rm.noAmmoWarningSound = LoadSound( "resources/sfx/noAmmoWarning.wav" );
+    rm.hpPowerUpSound = LoadSound( "resources/sfx/hpPowerUp.wav" );
+    rm.ammoPowerUpSound = LoadSound( "resources/sfx/ammoPowerUp.wav" );
+    rm.playerJumpSound = LoadSound( "resources/sfx/playerJump.wav" );
+    rm.playerStepSound = LoadSound( "resources/sfx/playerStep.wav" );
+
 }
 
 void unloadResourcesResourceManager( void ) {
+
     //UnloadTexture( rm.textureExample );
+    //UnloadMusicStream( rm.musicExample );
+
     UnloadSound( rm.handgunSound );
     UnloadSound( rm.submachinegunSound );
     UnloadSound( rm.shotgunSound );
-    //UnloadMusicStream( rm.musicExample );
+    UnloadSound( rm.enemyDeathSound01 );
+    UnloadSound( rm.enemyDeathSound02 );
+    UnloadSound( rm.enemyDeathSound03 );
+    UnloadSound( rm.noAmmoWarningSound );
+    UnloadSound( rm.hpPowerUpSound );
+    UnloadSound( rm.ammoPowerUpSound );
+    UnloadSound( rm.playerJumpSound );
+    UnloadSound( rm.playerStepSound );
+    
     unloadModelsResourceManager();
 }
 
