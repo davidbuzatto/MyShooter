@@ -68,4 +68,5 @@ void drawDebugInfo( GameWorld *gw );
 void drawGameoverOverlay( void );
 
 void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
+void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
 int compareRaycollision( const void *pr1, const void *pr2 );

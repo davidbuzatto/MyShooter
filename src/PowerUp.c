@@ -27,7 +27,7 @@ PowerUp createPowerUp( Vector3 pos, PowerUpType powerUpType ) {
         },
         .jumpSpeed = 5.0f,
         .hpColor = YELLOW,
-        .ammoColor = GRAY,
+        .ammoColor = SKYBLUE,
         .showWiresOnly = false,
 
         .model = { 0 },

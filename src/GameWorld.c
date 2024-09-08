@@ -18,6 +18,7 @@
 #include "Enemy.h"
 #include "Bullet.h"
 #include "Block.h"
+#include "utils.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -40,6 +41,7 @@ const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
 bool loadTestMap = true;
 const char *TEST_MAP_FILENAME = "testMap.txt";
+const char *TEST_IMAGE_MAP_FILENAME = "mapT.png";
 
 const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
 //const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
@@ -47,7 +49,7 @@ const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE
 //const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
 
 // globals
-bool showDebugInfo = false;
+bool showDebugInfo = true;
 bool drawWalls = true;
 
 IdentifiedRayCollision hits[MAX_HITS];
@@ -93,6 +95,7 @@ void configureGameWorld( GameWorld *gw ) {
 
     if ( loadTestMap ) {
         processMapFile( TextFormat( "resources/maps/%s", TEST_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
+        //processImageMapFile( TextFormat( "resources/maps/%s", TEST_IMAGE_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
     } else {
         processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
     }
@@ -367,9 +370,9 @@ Block createGround( float thickness, int lines, int columns ) {
     Block ground = {
         .id = entityIdCounter++,
         .pos = {
-            .x = -1.0f,
+            .x = columns/2,
             .y = -1.0f,
-            .z = -1.0f
+            .z = lines/2
         },
         .dim = {
             .x = columns, 
@@ -466,9 +469,10 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     gw->leftWall = (Block){
         .id = entityIdCounter++,
         .pos = {
-            .x = - ( groundColumns / 2 + 2 ),
+            //.x = - ( groundColumns / 2 + 2 ),
+            .x = -1,
             .y = wallHeight / 2,
-            .z = -1.0f
+            .z = groundLines / 2
         },
         .dim = {
             .x = 2.0f, 
@@ -484,9 +488,9 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     gw->rightWall = (Block){
         .id = entityIdCounter++,
         .pos = {
-            .x = groundColumns / 2,
+            .x = groundColumns + 1,
             .y = wallHeight / 2,
-            .z = -1.0f
+            .z = groundLines / 2
         },
         .dim = {
             .x = 2.0f, 
@@ -502,9 +506,9 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     gw->farWall = (Block){
         .id = entityIdCounter++,
         .pos = {
-            .x = -1.0f,
+            .x = groundColumns / 2,
             .y = wallHeight / 2,
-            .z = - ( groundLines / 2 + 2 )
+            .z = -1
         },
         .dim = {
             .x = groundColumns, 
@@ -520,9 +524,9 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     gw->nearWall = (Block){
         .id = entityIdCounter++,
         .pos = {
-            .x = -1.0f,
+            .x = groundColumns / 2,
             .y = wallHeight / 2,
-            .z = groundLines / 2
+            .z = groundLines + 1
         },
         .dim = {
             .x = groundColumns, 
@@ -1197,9 +1201,12 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
                         break;
                     case 'Y':
                         currentY += 2;
-                        line = 0;
+                        line = -1;
                         break;
                     case 'O':
+                        if ( oCounter == 0 ) {
+                            TraceLog( LOG_INFO, "%d %d", line, column );
+                        }
                         obstaclePositions[oCounter++] = (Vector3) { 
                             column, 
                             currentY, 
@@ -1237,34 +1244,86 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     gw->ground = createGround( 2.0f, groundLines, groundColumns );
     createWalls( gw, wallColor, groundLines, groundColumns, wallHeight );
 
-    int columnAdjust = -groundColumns/2 - 1;
-    int lineAdjust = -groundLines/2 - 2;
-
-    float playerX = (float) (columnAdjust + playerColumn);
-    float playerZ = (float) (lineAdjust + playerLine);
-
     gw->player = createPlayer( (Vector3){
-        .x = playerX,
+        .x = (float) playerColumn,
         .y = (float) playerY,
-        .z = playerZ
+        .z = (float) playerLine
     });
     gw->player.currentWeapon = &gw->player.handgun;
     gw->player.rotationHorizontalAngle = playerStartAngle;
 
-    for ( int i = 0; i < eCounter; i++ ) {
-        enemyPositions[i].x += columnAdjust;
-        enemyPositions[i].z += lineAdjust;
+    createEnemies( gw, enemyPositions, eCounter, enemyColor, enemyEyeColor );
+    createPowerUps( gw, powerUpPositions, powerUpTypes, pCounter );
+    createObstacles( gw, obstaclePositions, oCounter, blockSize, obstacleColor );
+
+}
+
+void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor ) {
+
+    int currentY = 1;
+
+    int playerLine = 0;
+    int playerColumn = 0;
+    int playerY = 0;
+
+    int oCounter = 0;
+    int eCounter = 0;
+    int pCounter = 0;
+
+    Vector3 obstaclePositions[1000];
+    Vector3 enemyPositions[100];
+    Vector3 powerUpPositions[100];
+    PowerUpType powerUpTypes[100];
+
+    Image img = LoadImage( filePath );
+
+    Color playerColor = { 0, 0, 255, 255 };
+    Color oColor = { 0, 255, 0, 255 };
+    Color eColor = { 255, 0, 0, 255 };
+    Color hpColor = { 255, 255, 0, 255 };
+    Color ammoColor = { 0, 255, 255, 255 };
+
+    for ( int i = 0; i < img.height; i++ ) {
+        for ( int j = 0; j < img.width; j++ ) {
+
+            Color c = GetImageColor( img, j, i );
+
+            if ( colorEqualsIgnoreAlpha( playerColor, c ) ) {
+                playerLine = i;
+                playerColumn = j;
+                playerY = currentY;
+            } else if ( colorEqualsIgnoreAlpha( oColor, c ) ) {
+                obstaclePositions[oCounter++] = (Vector3) { j, currentY, i };
+            } else if ( colorEqualsIgnoreAlpha( eColor, c ) ) {
+                enemyPositions[eCounter++] = (Vector3) { j, currentY, i };
+            } else if ( colorEqualsIgnoreAlpha( hpColor, c ) ) {
+                powerUpPositions[pCounter] = (Vector3) { j, currentY, i };
+                powerUpTypes[pCounter++] = POWER_UP_TYPE_HP;
+            } else if ( colorEqualsIgnoreAlpha( ammoColor, c ) ) {
+                powerUpPositions[pCounter] = (Vector3) { j, currentY, i };
+                powerUpTypes[pCounter++] = POWER_UP_TYPE_AMMO;
+            }
+
+        }
     }
 
-    for ( int i = 0; i < pCounter; i++ ) {
-        powerUpPositions[i].x += columnAdjust;
-        powerUpPositions[i].z += lineAdjust;
-    }
+    UnloadImage( img );
 
-    for ( int i = 0; i < oCounter; i++ ) {
-        obstaclePositions[i].x += columnAdjust;
-        obstaclePositions[i].z += lineAdjust;
-    }
+    int groundLines = img.height;
+    int groundColumns = img.width;
+    int wallHeight = 10;//atoi( parsedData[2] );
+    int playerStartAngle = 180;//atoi( parsedData[3] );
+
+    gw->ground = createGround( 2.0f, groundLines, groundColumns );
+    createWalls( gw, wallColor, groundLines, groundColumns, wallHeight );
+
+    gw->player = createPlayer( (Vector3){
+        .x = (float) playerColumn,
+        .y = (float) playerY,
+        .z = (float) playerLine
+    });
+    gw->player.currentWeapon = &gw->player.handgun;
+    gw->player.rotationHorizontalAngle = playerStartAngle;
 
     createEnemies( gw, enemyPositions, eCounter, enemyColor, enemyEyeColor );
     createPowerUps( gw, powerUpPositions, powerUpTypes, pCounter );

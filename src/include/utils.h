@@ -11,3 +11,4 @@
 
 Color interpolate2Color( Color c1, Color c2, float t );
 Color interpolate3Color( Color c1, Color c2, Color c3, float t );
+bool colorEqualsIgnoreAlpha( Color c1, Color c2 );

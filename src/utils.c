@@ -26,3 +26,7 @@ Color interpolate3Color( Color c1, Color c2, Color c3, float t ) {
     }
 
 }
+
+bool colorEqualsIgnoreAlpha( Color c1, Color c2 ) {
+    return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b;
+}
