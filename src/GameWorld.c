@@ -41,7 +41,7 @@ const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
 bool loadTestMap = true;
 const char *TEST_MAP_FILENAME = "testMap.txt";
-const char *TEST_IMAGE_MAP_FILENAME = "mapT.png";
+const char *TEST_IMAGE_MAP_FILENAME = "testMap.png";
 
 const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_FIRST_PERSON;
 //const CameraType DEFAULT_CAMERA_TYPE = CAMERA_TYPE_THIRD_PERSON_FIXED;
@@ -561,11 +561,6 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
         }
     }
 
-    if ( IsKeyPressed( KEY_ZERO ) || 
-         ( IsGamepadAvailable( GAMEPAD_ID ) && IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) ) {
-        resetGameWorld( gw );
-    }
-
     if ( IsKeyPressed( KEY_FIVE ) ) {
         int ct = gw->cameraType + 1;
         gw->cameraType = ct % CAMERA_TYPE_QUANTITY;
@@ -577,6 +572,11 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
 
     if ( IsKeyPressed( KEY_SEVEN ) ) {
         loadTestMap = !loadTestMap;
+        resetGameWorld( gw );
+    }
+
+    if ( IsKeyPressed( KEY_ZERO ) || 
+         ( IsGamepadAvailable( GAMEPAD_ID ) && IsGamepadButtonPressed( GAMEPAD_ID, GAMEPAD_BUTTON_MIDDLE_RIGHT ) ) ) {
         resetGameWorld( gw );
     }
 

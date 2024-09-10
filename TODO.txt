@@ -1,4 +1,3 @@
 - Música de fundo.
-- Música de fundo.
 - Ataque dos inimigos.
 - Iluminação?
