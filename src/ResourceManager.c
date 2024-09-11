@@ -18,6 +18,9 @@ void loadResourcesResourceManager( void ) {
     //rm.textureExample = LoadTexture( "resources/images/mario.png" );
     //rm.musicExample = LoadMusicStream( "resources/musics/overworld1.ogg" );
 
+    rm.lightShader = LoadShader( "resources/shaders/glsl330/lighting.vs", "resources/shaders/glsl330/lighting.fs" );
+    rm.lightShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation( rm.lightShader, "viewPos" );
+
     rm.handgunSound = LoadSound( "resources/sfx/handgun.wav" );
     rm.submachinegunSound = LoadSound( "resources/sfx/submachinegun.wav" );
     rm.shotgunSound = LoadSound( "resources/sfx/shotgun.wav" );
@@ -37,6 +40,8 @@ void unloadResourcesResourceManager( void ) {
 
     //UnloadTexture( rm.textureExample );
     //UnloadMusicStream( rm.musicExample );
+
+    UnloadShader( rm.lightShader );
 
     UnloadSound( rm.handgunSound );
     UnloadSound( rm.submachinegunSound );
@@ -83,6 +88,18 @@ void unloadModelsResourceManager( void ) {
         UnloadTexture( rm.groundModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
         UnloadModel( rm.groundModel );
         rm.groundModelCreated = false;
+    }
+
+    if ( rm.lrWallModelCreated ) {
+        UnloadTexture( rm.lrWallModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
+        UnloadModel( rm.lrWallModel );
+        rm.lrWallModelCreated = false;
+    }
+
+    if ( rm.fnWallModelCreated ) {
+        UnloadTexture( rm.fnWallModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture );
+        UnloadModel( rm.fnWallModel );
+        rm.fnWallModelCreated = false;
     }
 
 }

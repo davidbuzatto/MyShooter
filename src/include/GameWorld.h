@@ -43,6 +43,8 @@ Block createGround( float thickness, int lines, int columns );
 void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, float blockSize, Color obstacleColor );
 
 void createGroundModel( Block *ground );
+void createLRWallModel( Block *wall );
+void createFNWallModel( Block *wall );
 void createObstaclesModel( Block *obstacles, int obstaclesQuantity );
 
 void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight );
@@ -70,3 +72,8 @@ void drawGameoverOverlay( void );
 void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
 void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
 int compareRaycollision( const void *pr1, const void *pr2 );
+
+void updateShaders( GameWorld *gw );
+
+void drawLight( GameWorld *gw );
+void updateLight( GameWorld *gw, float delta );

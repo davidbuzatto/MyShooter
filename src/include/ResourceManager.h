@@ -18,16 +18,22 @@ typedef struct ResourceManager {
     Model enemyModel;
     Model obstacleModel;
     Model groundModel;
+    Model lrWallModel;
+    Model fnWallModel;
 
     bool playerModelCreated;
     bool powerUpModelCreated;
     bool enemyModelCreated;
     bool obstacleModelCreated;
     bool groundModelCreated;
+    bool lrWallModelCreated;
+    bool fnWallModelCreated;
 
     /*Texture2D textureExample;
     Sound soundExample;
     Music musicExample;*/
+
+    Shader lightShader;
 
     Sound handgunSound;
     Sound submachinegunSound;

@@ -22,6 +22,9 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
+
 //#include "raymath.h"
 //#define RAYGUI_IMPLEMENTATION    // to use raygui, comment these three lines.
 //#include "raygui.h"              // other compilation units must only include
@@ -68,9 +71,19 @@ int mouseMoveOffsetY = 0;
  * @brief Creates a dinamically allocated GameWorld struct instance.
  */
 GameWorld* createGameWorld( void ) {
+
     GameWorld *gw = (GameWorld*) calloc( 1, sizeof( GameWorld ) );
+
+    gw->lightShader = rm.lightShader;
+    gw->ambientLoc = GetShaderLocation( gw->lightShader, "ambient" );
+    SetShaderValue( gw->lightShader, gw->ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4 );
+
+    gw->light = CreateLight( LIGHT_POINT, (Vector3){ 50, 10, 10 }, Vector3Zero(), (Color){ 232, 232, 145, 255 }, rm.lightShader );
+
     configureGameWorld( gw );
+
     return gw;
+
 }
 
 void configureGameWorld( GameWorld *gw ) {
@@ -100,10 +113,24 @@ void configureGameWorld( GameWorld *gw ) {
         processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
     }
 
+    gw->light.position = (Vector3){ 50, 14, 10 };
+    gw->lightSpeed = -10;
+
+    gw->player.model.materials[0].shader = gw->lightShader;
+    gw->ground.model.materials[0].shader = gw->lightShader;
+    gw->enemies[0].model.materials[0].shader = gw->lightShader;
+    gw->powerUps[0].model.materials[0].shader = gw->lightShader;
+    gw->obstacles[0].model.materials[0].shader = gw->lightShader;
+    gw->leftWall.model.materials[0].shader = gw->lightShader;
+    gw->rightWall.model.materials[0].shader = gw->lightShader;
+    gw->farWall.model.materials[0].shader = gw->lightShader;
+    gw->nearWall.model.materials[0].shader = gw->lightShader;
+
     gw->cameraType = DEFAULT_CAMERA_TYPE;
     setupCamera( gw );
     updateCameraTarget( gw, &gw->player );
     updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
+    updateShaders( gw );
 
     gw->playerInputType = DEFAULT_INPUT_TYPE;
 
@@ -176,8 +203,11 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
             setEnemyDetectedByPlayer( enemy, &gw->player, true );
         }
 
+        updateLight( gw, delta );
+
         updateCameraTarget( gw, &gw->player );
         updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
+        updateShaders( gw );
 
         /*if ( player->currentWeapon->type == WEAPON_TYPE_SHOTGUN ) {
             currentMultipleHit = resolveMultipleHitsWorld( gw );
@@ -198,6 +228,7 @@ void drawGameWorld( GameWorld *gw ) {
     ClearBackground( WHITE );
 
     BeginMode3D( gw->camera );
+    BeginShaderMode( gw->lightShader );
 
     //DrawGrid( 120, 1.0f );
 
@@ -228,12 +259,9 @@ void drawGameWorld( GameWorld *gw ) {
         drawBlock( &gw->nearWall );
     }
 
-    /*Player *player = &gw->player;
-    if ( player->currentWeapon->type == WEAPON_TYPE_SHOTGUN ) {
-        currentMultipleHit = resolveMultipleHitsWorld( gw );
-    } else {
-        currentHit = resolveHitsWorld( gw );
-    }*/
+    EndShaderMode();
+
+    drawLight( gw );
 
     EndMode3D();
 
@@ -437,6 +465,50 @@ void createGroundModel( Block *ground ) {
 
 }
 
+void createLRWallModel( Block *wall ) {
+
+    if ( !rm.lrWallModelCreated ) {
+
+        Mesh mesh = GenMeshCube( wall->dim.x, wall->dim.y, wall->dim.z );
+        Model model = LoadModelFromMesh( mesh );
+
+        Image img = GenImageChecked( wall->dim.z, wall->dim.y, 2, 2, BLUE, DARKBLUE );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
+
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        rm.lrWallModel = model;
+        rm.lrWallModelCreated = true;
+
+    }
+
+    wall->renderModel = true;
+    wall->model = rm.lrWallModel;
+
+}
+
+void createFNWallModel( Block *wall ) {
+
+    if ( !rm.fnWallModelCreated ) {
+
+        Mesh mesh = GenMeshCube( wall->dim.x, wall->dim.y, wall->dim.z );
+        Model model = LoadModelFromMesh( mesh );
+
+        Image img = GenImageChecked( wall->dim.x, wall->dim.y, 2, 2, BLUE, DARKBLUE );
+        Texture2D texture = LoadTextureFromImage( img );
+        UnloadImage( img );
+
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+        rm.fnWallModel = model;
+        rm.fnWallModelCreated = true;
+
+    }
+
+    wall->renderModel = true;
+    wall->model = rm.fnWallModel;
+
+}
+
 void createObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
 
     if ( !rm.obstacleModelCreated ) {
@@ -469,7 +541,6 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
     gw->leftWall = (Block){
         .id = entityIdCounter++,
         .pos = {
-            //.x = - ( groundColumns / 2 + 2 ),
             .x = -1,
             .y = wallHeight / 2,
             .z = groundLines / 2
@@ -480,10 +551,14 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
             .z = groundLines
         },
         .color = wallColor,
+        .tintColor = wallColor,
+        .touchColor = wallColor,
         .visible = true,
         .renderModel = false,
         .renderTouchColor = false
     };
+
+    createLRWallModel( &gw->leftWall );
 
     gw->rightWall = (Block){
         .id = entityIdCounter++,
@@ -498,10 +573,14 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
             .z = groundLines
         },
         .color = wallColor,
+        .tintColor = wallColor,
+        .touchColor = wallColor,
         .visible = true,
         .renderModel = false,
         .renderTouchColor = false
     };
+
+    createLRWallModel( &gw->rightWall );
 
     gw->farWall = (Block){
         .id = entityIdCounter++,
@@ -516,10 +595,14 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
             .z = 2.0f
         },
         .color = wallColor,
+        .tintColor = wallColor,
+        .touchColor = wallColor,
         .visible = true,
         .renderModel = false,
         .renderTouchColor = false
     };
+
+    createFNWallModel( &gw->farWall );
 
     gw->nearWall = (Block){
         .id = entityIdCounter++,
@@ -534,10 +617,14 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
             .z = 2.0f
         },
         .color = wallColor,
+        .tintColor = wallColor,
+        .touchColor = wallColor,
         .visible = true,
         .renderModel = false,
         .renderTouchColor = false
     };
+
+    createFNWallModel( &gw->nearWall );
 
 }
 
@@ -573,6 +660,11 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
     if ( IsKeyPressed( KEY_SEVEN ) ) {
         loadTestMap = !loadTestMap;
         resetGameWorld( gw );
+    }
+
+    if ( IsKeyPressed( KEY_EIGHT ) ) {
+        gw->light.enabled = !gw->light.enabled;
+        UpdateLightValues( gw->lightShader, gw->light );
     }
 
     if ( IsKeyPressed( KEY_ZERO ) || 
@@ -1328,5 +1420,35 @@ void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, 
     createEnemies( gw, enemyPositions, eCounter, enemyColor, enemyEyeColor );
     createPowerUps( gw, powerUpPositions, powerUpTypes, pCounter );
     createObstacles( gw, obstaclePositions, oCounter, blockSize, obstacleColor );
+
+}
+
+void updateShaders( GameWorld *gw ) {
+
+    float cameraPos[3] = { gw->camera.position.x, gw->camera.position.y, gw->camera.position.z };
+    SetShaderValue( gw->lightShader, gw->lightShader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3 );
+
+}
+
+void drawLight( GameWorld *gw ) {
+
+    if ( gw->light.enabled ) {
+        DrawSphereEx( gw->light.position, 1.0f, 20, 20, gw->light.color );
+    } else {
+        DrawSphereWires( gw->light.position, 1.0f, 20, 20, ColorAlpha( gw->light.color, 0.3f ) );
+    }
+
+}
+
+void updateLight( GameWorld *gw, float delta ) {
+
+    if ( gw->light.position.x < 0 ) {
+        gw->lightSpeed = -gw->lightSpeed;
+    } else if ( gw->light.position.x > gw->ground.dim.x ) {
+        gw->lightSpeed = -gw->lightSpeed;
+    }
+    
+    gw->light.position.x += gw->lightSpeed * delta;
+    UpdateLightValues( gw->lightShader, gw->light );
 
 }

@@ -1,3 +1,6 @@
 - Música de fundo.
+
 - Ataque dos inimigos.
+
 - Iluminação?
+    - terminar para o mapa completo

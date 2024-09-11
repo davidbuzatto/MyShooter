@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "rlights.h"
 
 typedef enum GameWorldPlayerInputType {
     GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD,
@@ -319,6 +320,11 @@ typedef struct GameWorld {
 
     Block *obstacles;
     int obstacleQuantity;
+
+    Shader lightShader;
+    int ambientLoc;
+    Light light;
+    float lightSpeed;
 
     Block leftWall;
     Block rightWall;

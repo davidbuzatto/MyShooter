@@ -23,6 +23,7 @@ void drawBlock( Block *block ) {
         }
 
     }
+
 }
 
 BoundingBox getBlockBoundingBox( Block *block ) {
