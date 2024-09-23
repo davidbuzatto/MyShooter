@@ -40,6 +40,7 @@ int entityIdCounter = 1;
 
 const int GAMEPAD_ID = 0;
 const int CAMERA_TYPE_QUANTITY = 2;
+
 const float FIRST_PERSON_CAMERA_TARGET_DIST = 30.0f;
 
 bool loadTestMap = true;
@@ -52,7 +53,8 @@ const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE
 //const GameWorldPlayerInputType DEFAULT_INPUT_TYPE = GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD;
 
 // globals
-bool showDebugInfo = true;
+bool showDebugInfo = false;
+bool showInputHelp = true;
 bool drawWalls = true;
 
 IdentifiedRayCollision hits[MAX_HITS];
@@ -78,8 +80,6 @@ GameWorld* createGameWorld( void ) {
     gw->ambientLoc = GetShaderLocation( gw->lightShader, "ambient" );
     SetShaderValue( gw->lightShader, gw->ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 1.0f }, SHADER_UNIFORM_VEC4 );
 
-    gw->light = CreateLight( LIGHT_POINT, (Vector3){ 50, 10, 10 }, Vector3Zero(), (Color){ 232, 232, 145, 255 }, rm.lightShader );
-
     configureGameWorld( gw );
 
     return gw;
@@ -95,8 +95,9 @@ void configureGameWorld( GameWorld *gw ) {
     Color obstacleColor = LIME;
     //Color obstacleColor = Fade( LIME, 0.8f );
     Color enemyColor = RED;
-    Color enemyEyeColor = (Color){ 38, 0, 82, 255 };
+    Color enemyEyeColor = { 38, 0, 82, 255 };
     Color bulletColor = WHITE;
+    Color lightColor = { 232, 232, 145, 255 };
 
     xCam = 0.0f;
     yCam = 25.0f;
@@ -107,30 +108,34 @@ void configureGameWorld( GameWorld *gw ) {
     gw->bulletColor = bulletColor;
 
     if ( loadTestMap ) {
-        processMapFile( TextFormat( "resources/maps/%s", TEST_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
-        //processImageMapFile( TextFormat( "resources/maps/%s", TEST_IMAGE_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
+        processMapFile( TextFormat( "resources/maps/%s", TEST_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor, lightColor );
+        //processImageMapFile( TextFormat( "resources/maps/%s", TEST_IMAGE_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor, lightColor );
     } else {
-        processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor );
+        processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor, lightColor );
     }
 
-    gw->light.position = (Vector3){ 50, 14, 10 };
-    gw->lightSpeed = -10;
+    gw->lightSpeed = 0.0f;
 
-    gw->player.model.materials[0].shader = gw->lightShader;
-    gw->ground.model.materials[0].shader = gw->lightShader;
-    gw->enemies[0].model.materials[0].shader = gw->lightShader;
-    gw->powerUps[0].model.materials[0].shader = gw->lightShader;
-    gw->obstacles[0].model.materials[0].shader = gw->lightShader;
-    gw->leftWall.model.materials[0].shader = gw->lightShader;
-    gw->rightWall.model.materials[0].shader = gw->lightShader;
-    gw->farWall.model.materials[0].shader = gw->lightShader;
-    gw->nearWall.model.materials[0].shader = gw->lightShader;
+    if ( gw->lightQuantity != 0 ) {
+        gw->player.model.materials[0].shader = gw->lightShader;
+        gw->ground.model.materials[0].shader = gw->lightShader;
+        gw->enemies[0].model.materials[0].shader = gw->lightShader;
+        gw->powerUps[0].model.materials[0].shader = gw->lightShader;
+        gw->obstacles[0].model.materials[0].shader = gw->lightShader;
+        gw->leftWall.model.materials[0].shader = gw->lightShader;
+        gw->rightWall.model.materials[0].shader = gw->lightShader;
+        gw->farWall.model.materials[0].shader = gw->lightShader;
+        gw->nearWall.model.materials[0].shader = gw->lightShader;
+    }
 
     gw->cameraType = DEFAULT_CAMERA_TYPE;
     setupCamera( gw );
     updateCameraTarget( gw, &gw->player );
     updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
-    updateShaders( gw );
+
+    if ( gw->lightQuantity != 0 ) {
+        updateShaders( gw );
+    }
 
     gw->playerInputType = DEFAULT_INPUT_TYPE;
 
@@ -143,6 +148,7 @@ void destroyGameWorld( GameWorld *gw ) {
     free( gw->enemies );
     free( gw->powerUps );
     free( gw->obstacles );
+    free( gw->lights );
     free( gw );
 }
 
@@ -203,11 +209,14 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
             setEnemyDetectedByPlayer( enemy, &gw->player, true );
         }
 
-        updateLight( gw, delta );
+        updateLights( gw, delta );
 
         updateCameraTarget( gw, &gw->player );
         updateCameraPosition( gw, &gw->player, xCam, yCam, zCam );
-        updateShaders( gw );
+        
+        if ( gw->lightQuantity != 0 ) {
+            updateShaders( gw );
+        }
 
         /*if ( player->currentWeapon->type == WEAPON_TYPE_SHOTGUN ) {
             currentMultipleHit = resolveMultipleHitsWorld( gw );
@@ -228,7 +237,10 @@ void drawGameWorld( GameWorld *gw ) {
     ClearBackground( WHITE );
 
     BeginMode3D( gw->camera );
-    BeginShaderMode( gw->lightShader );
+
+    if ( gw->lightQuantity != 0 ) {
+        BeginShaderMode( gw->lightShader );
+    }
 
     //DrawGrid( 120, 1.0f );
 
@@ -259,9 +271,11 @@ void drawGameWorld( GameWorld *gw ) {
         drawBlock( &gw->nearWall );
     }
 
-    EndShaderMode();
+    if ( gw->lightQuantity != 0 ) {
+        EndShaderMode();
+    }
 
-    drawLight( gw );
+    drawLights( gw );
 
     EndMode3D();
 
@@ -278,6 +292,10 @@ void drawGameWorld( GameWorld *gw ) {
 
     if ( gw->player.state == PLAYER_STATE_DEAD ) {
         drawGameoverOverlay();
+    }
+
+    if ( showInputHelp ) {
+        drawInputHelp( gw );
     }
 
     EndDrawing();
@@ -440,6 +458,35 @@ void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, f
     }
 
     createObstaclesModel( gw->obstacles, gw->obstacleQuantity );
+
+}
+
+void createLights( GameWorld *gw, Vector3 *positions, int lightQuantity, Color lightColor ) {
+
+    if ( gw->lightQuantity == 0 ) {
+
+        gw->lightQuantity = MAX_LIGHTS;
+        gw->lights = (Light*) malloc( sizeof( Light ) * gw->lightQuantity );
+
+        for ( int i = 0; i < gw->lightQuantity; i++ ) {
+            gw->lights[i] = CreateLight( LIGHT_POINT, Vector3Zero(), Vector3Zero(), lightColor, rm.lightShader );
+        }
+
+    }
+
+    for ( int i = 0; i < MAX_LIGHTS; i++ ) {
+        gw->lights[i].position = Vector3Zero();
+        gw->lights[i].enabled = false;
+        UpdateLightValues( gw->lightShader, gw->lights[i] );
+    }
+
+    gw->activeLights = lightQuantity < MAX_LIGHTS ? lightQuantity : MAX_LIGHTS;
+
+    for ( int i = 0; i < gw->activeLights; i++ ) {
+        gw->lights[i].position = positions[i];
+        gw->lights[i].enabled = true;
+        UpdateLightValues( gw->lightShader, gw->lights[i] );
+    }
 
 }
 
@@ -630,6 +677,10 @@ void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundCol
 
 void processOptionsInput( Player *player, GameWorld *gw ) {
 
+    if ( IsKeyPressed( KEY_F1 ) ) {
+        showInputHelp = !showInputHelp;
+    }
+
     if ( IsKeyPressed( KEY_ONE ) ) {
         showDebugInfo = !showDebugInfo;
     }
@@ -663,8 +714,10 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
     }
 
     if ( IsKeyPressed( KEY_EIGHT ) ) {
-        gw->light.enabled = !gw->light.enabled;
-        UpdateLightValues( gw->lightShader, gw->light );
+        for ( int i = 0; i < gw->activeLights; i++ ) {
+            gw->lights[i].enabled = !gw->lights[i].enabled;
+            UpdateLightValues( gw->lightShader, gw->lights[i] );
+        }
     }
 
     if ( IsKeyPressed( KEY_ZERO ) || 
@@ -1229,7 +1282,7 @@ void drawGameoverOverlay( void ) {
     DrawText( tReset, GetScreenWidth() / 2 - wReset / 2, GetScreenHeight() / 2 - fontSizeReset / 2 + 30, fontSizeReset, RED );
 }
 
-void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor ) {
+void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor, Color lightColor ) {
 
     char *data = LoadFileText( filePath );
     int line = 0;
@@ -1250,11 +1303,13 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     int oCounter = 0;
     int eCounter = 0;
     int pCounter = 0;
+    int lCounter = 0;
 
     Vector3 obstaclePositions[1000];
     Vector3 enemyPositions[100];
     Vector3 powerUpPositions[100];
     PowerUpType powerUpTypes[100];
+    Vector3 lightPositions[100];
 
     while ( *data != '\0' ) {
 
@@ -1316,6 +1371,9 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
                         powerUpPositions[pCounter] = (Vector3) { column, currentY, line };
                         powerUpTypes[pCounter++] = POWER_UP_TYPE_AMMO;
                         break;
+                    case 'L':
+                        lightPositions[lCounter++] = (Vector3) { column, currentY, line };
+                        break;
                 }
 
             }
@@ -1344,13 +1402,14 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
     gw->player.currentWeapon = &gw->player.handgun;
     gw->player.rotationHorizontalAngle = playerStartAngle;
 
+    createLights( gw, lightPositions, lCounter, lightColor );
     createEnemies( gw, enemyPositions, eCounter, enemyColor, enemyEyeColor );
     createPowerUps( gw, powerUpPositions, powerUpTypes, pCounter );
     createObstacles( gw, obstaclePositions, oCounter, blockSize, obstacleColor );
 
 }
 
-void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor ) {
+void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor, Color lightColor ) {
 
     int currentY = 1;
 
@@ -1361,11 +1420,13 @@ void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, 
     int oCounter = 0;
     int eCounter = 0;
     int pCounter = 0;
+    int lCounter = 0;
 
     Vector3 obstaclePositions[1000];
     Vector3 enemyPositions[100];
     Vector3 powerUpPositions[100];
     PowerUpType powerUpTypes[100];
+    Vector3 lightPositions[100];
 
     Image img = LoadImage( filePath );
 
@@ -1374,6 +1435,7 @@ void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, 
     Color eColor = { 255, 0, 0, 255 };
     Color hpColor = { 255, 255, 0, 255 };
     Color ammoColor = { 0, 255, 255, 255 };
+    Color lColor = { 252, 127, 3, 255 };
 
     for ( int i = 0; i < img.height; i++ ) {
         for ( int j = 0; j < img.width; j++ ) {
@@ -1394,6 +1456,8 @@ void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, 
             } else if ( colorEqualsIgnoreAlpha( ammoColor, c ) ) {
                 powerUpPositions[pCounter] = (Vector3) { j, currentY, i };
                 powerUpTypes[pCounter++] = POWER_UP_TYPE_AMMO;
+            } else if ( colorEqualsIgnoreAlpha( lColor, c ) ) {
+                lightPositions[lCounter++] = (Vector3) { j, currentY, i };
             }
 
         }
@@ -1420,6 +1484,7 @@ void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, 
     createEnemies( gw, enemyPositions, eCounter, enemyColor, enemyEyeColor );
     createPowerUps( gw, powerUpPositions, powerUpTypes, pCounter );
     createObstacles( gw, obstaclePositions, oCounter, blockSize, obstacleColor );
+    createLights( gw, lightPositions, lCounter, lightColor );
 
 }
 
@@ -1430,25 +1495,55 @@ void updateShaders( GameWorld *gw ) {
 
 }
 
-void drawLight( GameWorld *gw ) {
+void drawLights( GameWorld *gw ) {
 
-    if ( gw->light.enabled ) {
-        DrawSphereEx( gw->light.position, 1.0f, 20, 20, gw->light.color );
-    } else {
-        DrawSphereWires( gw->light.position, 1.0f, 20, 20, ColorAlpha( gw->light.color, 0.3f ) );
+    for ( int i = 0; i < gw->activeLights; i++ ) {
+        if ( gw->lights[i].enabled ) {
+            DrawSphereEx( gw->lights[i].position, 1.0f, 20, 20, gw->lights[i].color );
+        } else {
+            //DrawSphereWires( gw->lights[i].position, 1.0f, 20, 20, ColorAlpha( gw->lights[i].color, 0.3f ) );
+        }
     }
 
 }
 
-void updateLight( GameWorld *gw, float delta ) {
+void updateLights( GameWorld *gw, float delta ) {
 
-    if ( gw->light.position.x < 0 ) {
-        gw->lightSpeed = -gw->lightSpeed;
-    } else if ( gw->light.position.x > gw->ground.dim.x ) {
-        gw->lightSpeed = -gw->lightSpeed;
-    }
-    
-    gw->light.position.x += gw->lightSpeed * delta;
-    UpdateLightValues( gw->lightShader, gw->light );
+    /*for ( int i = 0; i < gw->activeLights; i++ ) {
+
+        if ( gw->lights[i].position.x < 0 ) {
+            gw->lightSpeed = -gw->lightSpeed;
+        } else if ( gw->lights[i].position.x > gw->ground.dim.x ) {
+            gw->lightSpeed = -gw->lightSpeed;
+        }
+        
+        gw->lights[i].position.x += gw->lightSpeed * delta;
+        UpdateLightValues( gw->lightShader, gw->lights[i] );
+
+    }*/
+
+}
+
+void drawInputHelp( GameWorld *gw ) {
+
+    const char *helpText = "Help:\n"
+                           "<F1>: show/hide this help;\n"
+                           "<1>: show/hide debug info;\n"
+                           "<2>: show/hide walls;\n"
+                           "<3>: show/hide collision probes;\n"
+                           "<4>: show/hide touch collor;\n"
+                           "<5>: switch camera type (first person/third person);\n"
+                           "<6>: on/off immortal player;\n"
+                           "<7>: switch maps (test/stage);\n"
+                           "<8>: on/off lights;\n"
+                           "<0>: reset game world;\n"
+                           "<TAB>: switch input type (gamepad/keyboard+mouse)."
+                           ;
+
+    int margin = 10;
+    int x = 500;
+    int width = GetScreenWidth() - x;
+    DrawRectangle( x - margin, margin, width, 160, Fade( WHITE, 0.7f ) );
+    DrawText( helpText, x, margin + 10, 10, BLACK );
 
 }

@@ -323,7 +323,10 @@ typedef struct GameWorld {
 
     Shader lightShader;
     int ambientLoc;
-    Light light;
+
+    Light *lights;
+    int lightQuantity;
+    int activeLights;
     float lightSpeed;
 
     Block leftWall;

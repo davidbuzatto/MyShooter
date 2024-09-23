@@ -42,6 +42,8 @@ void showCameraInfo( Camera3D *camera, int x, int y );
 Block createGround( float thickness, int lines, int columns );
 void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, float blockSize, Color obstacleColor );
 
+void createLights( GameWorld *gw, Vector3 *positions, int lightQuantity, Color lightColor );
+
 void createGroundModel( Block *ground );
 void createLRWallModel( Block *wall );
 void createFNWallModel( Block *wall );
@@ -69,11 +71,13 @@ void resetGameWorld( GameWorld *gw );
 void drawDebugInfo( GameWorld *gw );
 void drawGameoverOverlay( void );
 
-void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
-void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor );
+void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor, Color lightColor );
+void processImageMapFile( const char *filePath, GameWorld *gw, float blockSize, Color wallColor, Color obstacleColor, Color enemyColor, Color enemyEyeColor, Color lightColor );
 int compareRaycollision( const void *pr1, const void *pr2 );
 
 void updateShaders( GameWorld *gw );
 
-void drawLight( GameWorld *gw );
-void updateLight( GameWorld *gw, float delta );
+void drawLights( GameWorld *gw );
+void updateLights( GameWorld *gw, float delta );
+
+void drawInputHelp( GameWorld *gw );
