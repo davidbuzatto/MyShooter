@@ -110,8 +110,10 @@ void configureGameWorld( GameWorld *gw ) {
     if ( loadTestMap ) {
         processMapFile( TextFormat( "resources/maps/%s", TEST_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor, lightColor );
         //processImageMapFile( TextFormat( "resources/maps/%s", TEST_IMAGE_MAP_FILENAME ), gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor, lightColor );
+        setBgMusic( gw, &rm.bgMusicTestMap );
     } else {
         processMapFile( "resources/maps/map1.txt", gw, blockSize, wallColor, obstacleColor, enemyColor, enemyEyeColor, lightColor );
+        setBgMusic( gw, &rm.bgMusicMap1 );
     }
 
     gw->lightSpeed = 0.0f;
@@ -200,7 +202,7 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
                     jumpEnemy( enemy );
                 }
             }
-            updateEnemy( enemy, player, delta );
+            updateEnemy( enemy, player, gw, delta );
             updateEnemyCollisionProbes( enemy );
             resolveCollisionEnemyObstacles( enemy, gw );
             resolveCollisionEnemyGround( enemy, ground );
@@ -225,6 +227,8 @@ void inputAndUpdateGameWorld( GameWorld *gw ) {
         }*/
 
     }
+
+    playBgMusic( gw );
 
 }
 
@@ -276,6 +280,10 @@ void drawGameWorld( GameWorld *gw ) {
     }
 
     drawLights( gw );
+
+    for ( int i = 0; i < gw->enemyQuantity; i++ ) {
+        drawEnemyExplosionBillboard( &gw->enemies[i], gw->camera );
+    }
 
     EndMode3D();
 
@@ -1545,5 +1553,32 @@ void drawInputHelp( GameWorld *gw ) {
     int width = GetScreenWidth() - x;
     DrawRectangle( x - margin, margin, width, 160, Fade( WHITE, 0.7f ) );
     DrawText( helpText, x, margin + 10, 10, BLACK );
+
+}
+
+void playBgMusic( GameWorld *gw ) {
+
+    if ( gw->currentBgMusic != NULL ) {
+        if ( !IsMusicStreamPlaying( *(gw->currentBgMusic) ) ) {
+            PlayMusicStream( *(gw->currentBgMusic) );
+        } else {
+            UpdateMusicStream( *(gw->currentBgMusic) );
+        }
+    }
+
+}
+
+void setBgMusic( GameWorld *gw, Music *music ) {
+    resetBgMusic( gw );
+    gw->currentBgMusic = music;
+    SetMusicVolume( *music, 0.2f );
+}
+
+void resetBgMusic( GameWorld *gw ) {
+
+    if ( gw->currentBgMusic != NULL ) {
+        StopMusicStream( *(gw->currentBgMusic) );
+        gw->currentBgMusic = NULL;
+    }
 
 }

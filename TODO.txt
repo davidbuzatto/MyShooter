@@ -1,2 +1,1 @@
-- Música de fundo.
 - Ataque dos inimigos.

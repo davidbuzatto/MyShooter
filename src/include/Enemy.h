@@ -7,8 +7,9 @@
 
 Enemy createEnemy( Vector3 pos, Color color, Color eyeColor );
 void drawEnemy( Enemy *enemy );
+void drawEnemyExplosionBillboard( Enemy *enemy, Camera3D camera );
 void drawEnemyHpBar( Enemy *enemy, Camera3D camera );
-void updateEnemy( Enemy *enemy, Player *player, float delta );
+void updateEnemy( Enemy *enemy, Player *player, GameWorld *gw, float delta );
 void updateEnemyCollisionProbes( Enemy *enemy );
 void jumpEnemy( Enemy *enemy );
 EnemyCollisionType checkCollisionEnemyBlock( Enemy *enemy, Block *block, bool checkCollisionProbes );

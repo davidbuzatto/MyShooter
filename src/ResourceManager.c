@@ -15,8 +15,9 @@ ResourceManager rm = { 0 };
 
 void loadResourcesResourceManager( void ) {
 
-    //rm.textureExample = LoadTexture( "resources/images/mario.png" );
-    //rm.musicExample = LoadMusicStream( "resources/musics/overworld1.ogg" );
+    rm.explosion0 = LoadTexture( "resources/images/explosion0.png" );
+    rm.explosion1 = LoadTexture( "resources/images/explosion1.png" );
+    rm.explosion2 = LoadTexture( "resources/images/explosion2.png" );
 
     rm.lightShader = LoadShader( "resources/shaders/glsl330/lighting.vs", "resources/shaders/glsl330/lighting.fs" );
     rm.lightShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation( rm.lightShader, "viewPos" );
@@ -34,12 +35,16 @@ void loadResourcesResourceManager( void ) {
     rm.playerJumpSound = LoadSound( "resources/sfx/playerJump.wav" );
     rm.playerStepSound = LoadSound( "resources/sfx/playerStep.wav" );
 
+    rm.bgMusicTestMap = LoadMusicStream( "resources/musics/AE-Spacetime.mp3" );
+    rm.bgMusicMap1 = LoadMusicStream( "resources/musics/AE-Twists.mp3" );
+
 }
 
 void unloadResourcesResourceManager( void ) {
 
-    //UnloadTexture( rm.textureExample );
-    //UnloadMusicStream( rm.musicExample );
+    UnloadTexture( rm.explosion0 );
+    UnloadTexture( rm.explosion1 );
+    UnloadTexture( rm.explosion2 );
 
     UnloadShader( rm.lightShader );
 
@@ -54,8 +59,12 @@ void unloadResourcesResourceManager( void ) {
     UnloadSound( rm.ammoPowerUpSound );
     UnloadSound( rm.playerJumpSound );
     UnloadSound( rm.playerStepSound );
+
+    UnloadMusicStream( rm.bgMusicTestMap );
+    UnloadMusicStream( rm.bgMusicMap1 );
     
     unloadModelsResourceManager();
+
 }
 
 void unloadModelsResourceManager( void ) {

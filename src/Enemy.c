@@ -7,6 +7,7 @@
 #include "Block.h"
 #include "Bullet.h"
 #include "Enemy.h"
+#include "ExplosionBillboard.h"
 #include "ResourceManager.h"
 #include "raylib.h"
 #include "raymath.h"
@@ -96,56 +97,70 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
         case 2: enemy.deathSound = rm.enemyDeathSound03; break;
     }
 
+    Vector3 ebPos = pos;
+    ebPos.y += 1.5f;
+    enemy.eb = createExplosionBillboard( ebPos );
+
     return enemy;
 
 }
 
 void drawEnemy( Enemy *enemy ) {
 
-    if ( enemy->showCollisionProbes ) {
-        drawBlock( &enemy->cpLeft );
-        drawBlock( &enemy->cpRight );
-        drawBlock( &enemy->cpBottom );
-        drawBlock( &enemy->cpTop );
-        drawBlock( &enemy->cpFar );
-        drawBlock( &enemy->cpNear );
+    if ( enemy->state == ENEMY_STATE_ALIVE ) {
+
+        if ( enemy->showCollisionProbes ) {
+            drawBlock( &enemy->cpLeft );
+            drawBlock( &enemy->cpRight );
+            drawBlock( &enemy->cpBottom );
+            drawBlock( &enemy->cpTop );
+            drawBlock( &enemy->cpFar );
+            drawBlock( &enemy->cpNear );
+        }
+
+        if ( !enemy->showWiresOnly ) {
+
+            DrawModelEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, enemy->color );
+
+            float a = 45.0f;
+
+            DrawSphere(
+                (Vector3){
+                    .x = enemy->pos.x - cos( DEG2RAD * ( enemy->rotationHorizontalAngle + a ) ) * 1.0f,
+                    .y = enemy->pos.y + 1.0f,
+                    .z = enemy->pos.z + sin( DEG2RAD * ( enemy->rotationHorizontalAngle + a ) ) * 1.0f,
+                },
+                0.5f, 
+                enemy->eyeColor
+            );
+
+            DrawSphere(
+                (Vector3){
+                    .x = enemy->pos.x - cos( DEG2RAD * ( enemy->rotationHorizontalAngle - a ) ) * 1.0f,
+                    .y = enemy->pos.y + 1.0f,
+                    .z = enemy->pos.z + sin( DEG2RAD * ( enemy->rotationHorizontalAngle - a ) ) * 1.0f,
+                },
+                0.5f, 
+                enemy->eyeColor
+            );
+
+        }
+
+        int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
+        for ( int i = 0; i < collidedBullets; i++ ) {
+            drawBullet( &enemy->collidedBullets[i] );
+        }
+
+        DrawModelWiresEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, BLACK );
+
     }
 
-    if ( !enemy->showWiresOnly ) {
+}
 
-        DrawModelEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, enemy->color );
-
-        float a = 45.0f;
-
-        DrawSphere(
-            (Vector3){
-                .x = enemy->pos.x - cos( DEG2RAD * ( enemy->rotationHorizontalAngle + a ) ) * 1.0f,
-                .y = enemy->pos.y + 1.0f,
-                .z = enemy->pos.z + sin( DEG2RAD * ( enemy->rotationHorizontalAngle + a ) ) * 1.0f,
-            },
-            0.5f, 
-            enemy->eyeColor
-        );
-
-        DrawSphere(
-            (Vector3){
-                .x = enemy->pos.x - cos( DEG2RAD * ( enemy->rotationHorizontalAngle - a ) ) * 1.0f,
-                .y = enemy->pos.y + 1.0f,
-                .z = enemy->pos.z + sin( DEG2RAD * ( enemy->rotationHorizontalAngle - a ) ) * 1.0f,
-            },
-            0.5f, 
-            enemy->eyeColor
-        );
-
+void drawEnemyExplosionBillboard( Enemy *enemy, Camera3D camera ) {
+    if ( enemy->state == ENEMY_STATE_DYING ) {
+        drawExplosionBillboard( &enemy->eb, camera );
     }
-
-    int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
-    for ( int i = 0; i < collidedBullets; i++ ) {
-        drawBullet( &enemy->collidedBullets[i] );
-    }
-
-    DrawModelWiresEx( enemy->model, enemy->pos, enemy->rotationAxis, enemy->rotationHorizontalAngle, enemy->scale, BLACK );
-
 }
 
 void drawEnemyHpBar( Enemy *enemy, Camera3D camera ) {
@@ -169,43 +184,53 @@ void drawEnemyHpBar( Enemy *enemy, Camera3D camera ) {
 
 }
 
-void updateEnemy( Enemy *enemy, Player *player, float delta ) {
+void updateEnemy( Enemy *enemy, Player *player, GameWorld *gw, float delta ) {
 
-    enemy->lastPos = enemy->pos;
+    if ( enemy->state == ENEMY_STATE_ALIVE ) {
 
-    enemy->pos.x += enemy->vel.x * delta;
-    enemy->pos.y += enemy->vel.y * delta;
-    enemy->pos.z += enemy->vel.z * delta;
+        enemy->lastPos = enemy->pos;
 
-    enemy->vel.y -= GRAVITY * delta;
+        enemy->pos.x += enemy->vel.x * delta;
+        enemy->pos.y += enemy->vel.y * delta;
+        enemy->pos.z += enemy->vel.z * delta;
 
-    //enemy->rotationHorizontalAngle += enemy->rotationVel * delta;
+        enemy->vel.y -= GRAVITY * delta;
 
-    if ( enemy->pos.y < enemy->lastPos.y ) {
-        enemy->positionState = ENEMY_POSITION_STATE_FALLING;
-    } else if ( enemy->pos.y > enemy->lastPos.y ) {
-        enemy->positionState = ENEMY_POSITION_STATE_JUMPING;
-    } else {
-        enemy->positionState = ENEMY_POSITION_STATE_ON_GROUND;
-    }
+        //enemy->rotationHorizontalAngle += enemy->rotationVel * delta;
 
-    if ( enemy->showHpBar ) {
-        enemy->hpBarShowCounter += delta;
-        if ( enemy->hpBarShowCounter >= enemy->timeShowingHpBar ) {
-            enemy->hpBarShowCounter = 0.0f;
-            enemy->showHpBar = false;
+        if ( enemy->pos.y < enemy->lastPos.y ) {
+            enemy->positionState = ENEMY_POSITION_STATE_FALLING;
+        } else if ( enemy->pos.y > enemy->lastPos.y ) {
+            enemy->positionState = ENEMY_POSITION_STATE_JUMPING;
+        } else {
+            enemy->positionState = ENEMY_POSITION_STATE_ON_GROUND;
         }
-    }
 
-    enemy->rotationHorizontalAngle = - ( RAD2DEG * atan2( enemy->pos.z - player->pos.z, enemy->pos.x - player->pos.x ) );
+        if ( enemy->showHpBar ) {
+            enemy->hpBarShowCounter += delta;
+            if ( enemy->hpBarShowCounter >= enemy->timeShowingHpBar ) {
+                enemy->hpBarShowCounter = 0.0f;
+                enemy->showHpBar = false;
+            }
+        }
 
-    int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
-    for ( int i = 0; i < collidedBullets; i++ ) {
-        Bullet *bullet = &enemy->collidedBullets[i];
-        int h = enemy->rotationHorizontalAngle + 180;
-        bullet->pos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
-        bullet->pos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
-        bullet->pos.y = enemy->pos.y - ( sin( DEG2RAD * ( bullet->vAngle ) ) * bullet->vDistance );
+        enemy->rotationHorizontalAngle = - ( RAD2DEG * atan2( enemy->pos.z - player->pos.z, enemy->pos.x - player->pos.x ) );
+
+        int collidedBullets = enemy->collidedBulletCount < enemy->maxCollidedBullets ? enemy->collidedBulletCount : enemy->maxCollidedBullets;
+        for ( int i = 0; i < collidedBullets; i++ ) {
+            Bullet *bullet = &enemy->collidedBullets[i];
+            int h = enemy->rotationHorizontalAngle + 180;
+            bullet->pos.x = enemy->pos.x - ( cos( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
+            bullet->pos.z = enemy->pos.z + ( sin( DEG2RAD * ( h - bullet->hAngle ) ) * bullet->hDistance );
+            bullet->pos.y = enemy->pos.y - ( sin( DEG2RAD * ( bullet->vAngle ) ) * bullet->vDistance );
+        }
+
+    } else if ( enemy->state == ENEMY_STATE_DYING ) {
+        updateExplosionBillboard( &enemy->eb, delta );
+        if ( enemy->eb.finished ) {
+            enemy->state = ENEMY_STATE_DEAD;
+            cleanDeadEnemies( gw );
+        }
     }
 
 }

@@ -472,11 +472,11 @@ void playerShotHandgun( GameWorld *gw, Player *player, IdentifiedRayCollision *i
                 enemyShot = enemy;
 
                 if ( enemy->currentHp <= 0 ) {
-                    enemy->state = ENEMY_STATE_DEAD;
+                    enemy->state = ENEMY_STATE_DYING;
                     PlaySound( enemy->deathSound );
                     enemyShot = NULL;
                     createBulletWorld = false;
-                    cleanDeadEnemies( gw );
+                    //cleanDeadEnemies( gw );
                 }
 
                 break;
@@ -535,11 +535,11 @@ void playerShotMachinegun( GameWorld *gw, Player *player, IdentifiedRayCollision
                     enemyShot = enemy;
 
                     if ( enemy->currentHp <= 0 ) {
-                        enemy->state = ENEMY_STATE_DEAD;
+                        enemy->state = ENEMY_STATE_DYING;
                         PlaySound( enemy->deathSound );
                         enemyShot = NULL;
                         createBulletWorld = false;
-                        cleanDeadEnemies( gw );
+                        //cleanDeadEnemies( gw );
                     }
 
                     break;
@@ -600,11 +600,11 @@ void playerShotShotgun( GameWorld *gw, Player *player, MultipleIdentifiedRayColl
                     enemyShot = enemy;
 
                     if ( enemy->currentHp <= 0 ) {
-                        enemy->state = ENEMY_STATE_DEAD;
+                        enemy->state = ENEMY_STATE_DYING;
                         PlaySound( enemy->deathSound );
                         enemyShot = NULL;
                         createBulletWorld = false;
-                        cleanDeadEnemies( gw );
+                        //cleanDeadEnemies( gw );
                     }
 
                     break;

@@ -235,6 +235,16 @@ typedef struct PowerUp {
 
 } PowerUp;
 
+typedef struct ExplosionBillboard {
+    Vector3 pos;
+    Texture2D textures[3];
+    int frameCount;
+    int currentFrame;
+    float frameTimeCounter;
+    float timeToNextFrame;
+    bool finished;
+} ExplosionBillboard;
+
 typedef struct Enemy {
 
     int id;
@@ -289,6 +299,7 @@ typedef struct Enemy {
     int collidedBulletCount;
 
     Sound deathSound;
+    ExplosionBillboard eb;
 
 } Enemy;
 
@@ -339,6 +350,8 @@ typedef struct GameWorld {
     int collidedBulletCount;
     Color bulletColor;
     
+    Music *currentBgMusic;
+
     GameWorldPlayerInputType playerInputType;
 
 } GameWorld;

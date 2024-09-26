@@ -81,3 +81,7 @@ void drawLights( GameWorld *gw );
 void updateLights( GameWorld *gw, float delta );
 
 void drawInputHelp( GameWorld *gw );
+
+void playBgMusic( GameWorld *gw );
+void setBgMusic( GameWorld *gw, Music *music );
+void resetBgMusic( GameWorld *gw );

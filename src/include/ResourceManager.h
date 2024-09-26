@@ -29,9 +29,9 @@ typedef struct ResourceManager {
     bool lrWallModelCreated;
     bool fnWallModelCreated;
 
-    /*Texture2D textureExample;
-    Sound soundExample;
-    Music musicExample;*/
+    Texture2D explosion0;
+    Texture2D explosion1;
+    Texture2D explosion2;
 
     Shader lightShader;
 
@@ -50,6 +50,9 @@ typedef struct ResourceManager {
 
     Sound playerJumpSound;
     Sound playerStepSound;
+
+    Music bgMusicTestMap;
+    Music bgMusicMap1;
 
 } ResourceManager;
 
