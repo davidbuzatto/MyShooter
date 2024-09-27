@@ -7,8 +7,65 @@
  */
 #pragma once
 
-#include "Types.h"
+#include "Player.h"
+#include "Enemy.h"
+#include "PowerUp.h"
+#include "Block.h"
+#include "Bullet.h"
 #include "raylib/raylib.h"
+#include "raylib/rlights.h"
+
+typedef enum GameWorldPlayerInputType {
+    GAME_WORLD_PLAYER_INPUT_TYPE_KEYBOARD,
+    GAME_WORLD_PLAYER_INPUT_TYPE_GAMEPAD
+} GameWorldPlayerInputType;
+
+typedef enum CameraType {
+    CAMERA_TYPE_THIRD_PERSON_FIXED,
+    CAMERA_TYPE_FIRST_PERSON
+} CameraType;
+
+typedef struct GameWorld {
+
+    Camera3D camera;
+    CameraType cameraType;
+    
+    Player player;
+
+    Enemy *enemies;
+    int enemyQuantity;
+
+    PowerUp *powerUps;
+    int powerUpQuantity;
+    
+    Block ground;
+
+    Block *obstacles;
+    int obstacleQuantity;
+
+    Shader lightShader;
+    int ambientLoc;
+
+    Light *lights;
+    int lightQuantity;
+    int activeLights;
+    float lightSpeed;
+
+    Block leftWall;
+    Block rightWall;
+    Block farWall;
+    Block nearWall;
+
+    Bullet collidedBullets[50];
+    int maxCollidedBullets;
+    int collidedBulletCount;
+    Color bulletColor;
+    
+    Music *currentBgMusic;
+
+    GameWorldPlayerInputType playerInputType;
+
+} GameWorld;
 
 extern const float GRAVITY;
 

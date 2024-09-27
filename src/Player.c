@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "Types.h"
+#include "EntitySupport.h"
 #include "GameWorld.h"
 #include "Block.h"
 #include "Bullet.h"

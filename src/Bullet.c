@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "Types.h"
+#include "EntitySupport.h"
 #include "GameWorld.h"
 #include "Enemy.h"
 #include "Block.h"

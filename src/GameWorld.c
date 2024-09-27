@@ -11,7 +11,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "Types.h"
 #include "GameWorld.h"
 #include "PowerUp.h"
 #include "Player.h"

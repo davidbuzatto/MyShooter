@@ -1,4 +1,3 @@
-#include "Types.h"
 #include "ExplosionBillboard.h"
 #include "ResourceManager.h"
 #include "raylib/raylib.h"
