@@ -223,6 +223,8 @@ void updateEnemy( Enemy *enemy, Player *player, GameWorld *gw, float delta ) {
             bullet->pos.y = enemy->pos.y - ( sin( DEG2RAD * ( bullet->vAngle ) ) * bullet->vDistance );
         }
 
+        enemy->eb.pos.y = enemy->pos.y + 0.5f;
+
     } else if ( enemy->state == ENEMY_STATE_DYING ) {
         updateExplosionBillboard( &enemy->eb, delta );
         if ( enemy->eb.finished ) {
