@@ -97,9 +97,7 @@ Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
         case 2: enemy.deathSound = rm.enemyDeathSound03; break;
     }
 
-    Vector3 ebPos = pos;
-    ebPos.y += 1.5f;
-    enemy.eb = createExplosionBillboard( ebPos );
+    enemy.eb = createExplosionBillboard( pos );
 
     return enemy;
 

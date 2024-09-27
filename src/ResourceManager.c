@@ -15,9 +15,9 @@ ResourceManager rm = { 0 };
 
 void loadResourcesResourceManager( void ) {
 
-    rm.explosion0 = LoadTexture( "resources/images/explosion0.png" );
-    rm.explosion1 = LoadTexture( "resources/images/explosion1.png" );
-    rm.explosion2 = LoadTexture( "resources/images/explosion2.png" );
+    rm.explosion0 = LoadTexture( "resources/images/blood0.png" );
+    rm.explosion1 = LoadTexture( "resources/images/blood1.png" );
+    rm.explosion2 = LoadTexture( "resources/images/blood2.png" );
 
     rm.lightShader = LoadShader( "resources/shaders/glsl330/lighting.vs", "resources/shaders/glsl330/lighting.fs" );
     rm.lightShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation( rm.lightShader, "viewPos" );

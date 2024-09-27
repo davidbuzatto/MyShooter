@@ -4,6 +4,8 @@
 
 ExplosionBillboard createExplosionBillboard( Vector3 pos ) {
 
+    pos.y += 0.5f;
+
     return (ExplosionBillboard) {
         .pos = pos,
         .textures = { rm.explosion0, rm.explosion1, rm.explosion2 },
