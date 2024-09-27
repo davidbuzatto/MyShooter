@@ -122,7 +122,7 @@ void configureGameWorld( GameWorld *gw ) {
         gw->ground.model.materials[0].shader = gw->lightShader;
         gw->enemies[0].model.materials[0].shader = gw->lightShader;
         gw->powerUps[0].model.materials[0].shader = gw->lightShader;
-        gw->obstacles[0].model.materials[0].shader = gw->lightShader;
+        gw->obstacles.data[0].model.materials[0].shader = gw->lightShader;
         gw->leftWall.model.materials[0].shader = gw->lightShader;
         gw->rightWall.model.materials[0].shader = gw->lightShader;
         gw->farWall.model.materials[0].shader = gw->lightShader;
@@ -148,7 +148,7 @@ void configureGameWorld( GameWorld *gw ) {
 void destroyGameWorld( GameWorld *gw ) {
     free( gw->enemies );
     free( gw->powerUps );
-    free( gw->obstacles );
+    Obstacles_drop( &gw->obstacles );
     free( gw->lights );
     free( gw );
 }
@@ -263,8 +263,8 @@ void drawGameWorld( GameWorld *gw ) {
         drawPowerUp( &gw->powerUps[i] );
     }
 
-    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-        drawBlock( &gw->obstacles[i] );
+    c_foreach ( i, Obstacles, gw->obstacles ) {
+        drawBlock( i.ref );
     }
 
     if ( drawWalls ) {
@@ -447,11 +447,11 @@ Block createGround( float thickness, int lines, int columns ) {
 
 void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, float blockSize, Color obstacleColor ) {
 
-    gw->obstacleQuantity = obstacleQuantity;
-    gw->obstacles = (Block*) malloc( sizeof( Block ) * gw->obstacleQuantity );
+    Obstacles_drop( &gw->obstacles );
+    gw->obstacles = (Obstacles){ 0 };
 
-    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-        gw->obstacles[i] = (Block){
+    for ( int i = 0; i < obstacleQuantity; i++ ) {
+        Obstacles_push( &gw->obstacles, (Block){
             .id = entityIdCounter++,
             .pos = positions[i],
             .dim = { blockSize, blockSize, blockSize },
@@ -461,10 +461,10 @@ void createObstacles( GameWorld *gw, Vector3 *positions, int obstacleQuantity, f
             .visible = true,
             .renderModel = false,
             .renderTouchColor = false
-        };
+        });
     }
 
-    createObstaclesModel( gw->obstacles, gw->obstacleQuantity );
+    createObstaclesModel( &gw->obstacles );
 
 }
 
@@ -563,11 +563,11 @@ void createFNWallModel( Block *wall ) {
 
 }
 
-void createObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
+void createObstaclesModel( Obstacles *obst ) {
 
     if ( !rm.obstacleModelCreated ) {
 
-        Block *baseObstacle = &obstacles[0];
+        Block *baseObstacle = &obst->data[0];
 
         Mesh mesh = GenMeshCube( baseObstacle->dim.x, baseObstacle->dim.y, baseObstacle->dim.z );
         Model model = LoadModelFromMesh( mesh );
@@ -583,9 +583,9 @@ void createObstaclesModel( Block *obstacles, int obstaclesQuantity ) {
 
     }
 
-    for ( int i = 0; i < obstaclesQuantity; i++ ) {
-        obstacles[i].renderModel = true;
-        obstacles[i].model = rm.obstacleModel;
+    for ( int i = 0; i < Obstacles_size( obst ); i++ ) {
+        obst->data[i].renderModel = true;
+        obst->data[i].model = rm.obstacleModel;
     }
 
 }
@@ -701,8 +701,8 @@ void processOptionsInput( Player *player, GameWorld *gw ) {
     }
 
     if ( IsKeyPressed( KEY_FOUR ) ) {
-        for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-            gw->obstacles[i].renderTouchColor = !gw->obstacles[i].renderTouchColor;
+        for ( int i = 0; i < Obstacles_size( &gw->obstacles ); i++ ) {
+            gw->obstacles.data[i].renderTouchColor = !gw->obstacles.data[i].renderTouchColor;
         }
     }
 
@@ -873,8 +873,8 @@ void processPlayerInputByGamepad( GameWorld *gw, Player *player, CameraType came
 
 void resolveCollisionPlayerObstacles( Player *player, GameWorld *gw ) {
 
-    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-        Block *obs = &gw->obstacles[i];
+    for ( int i = 0; i < Obstacles_size( &gw->obstacles ); i++ ) {
+        Block *obs = &gw->obstacles.data[i];
         PlayerCollisionType coll = checkCollisionPlayerBlock( player, obs, true );
         switch ( coll ) {
             case PLAYER_COLLISION_LEFT:
@@ -914,8 +914,8 @@ void resolveCollisionPlayerObstacles( Player *player, GameWorld *gw ) {
 
 void resolveCollisionEnemyObstacles( Enemy *enemy, GameWorld *gw ) {
 
-    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-        Block *obs = &gw->obstacles[i];
+    for ( int i = 0; i < Obstacles_size( &gw->obstacles ); i++ ) {
+        Block *obs = &gw->obstacles.data[i];
         EnemyCollisionType coll = checkCollisionEnemyBlock( enemy, obs, true );
         switch ( coll ) {
             case ENEMY_COLLISION_LEFT:
@@ -1103,11 +1103,12 @@ IdentifiedRayCollision resolveHitsWorld( GameWorld *gw ) {
         }
     }
 
-    for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-        RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles[i] ) );  
+    for ( int i = 0; i < Obstacles_size( &gw->obstacles ); i++ ) {
+        RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles.data[i] ) );
         if ( rc.hit && hitCounter < MAX_HITS ) {
             hits[hitCounter++] = (IdentifiedRayCollision) {
-                .entityId = gw->obstacles[i].id,
+                //.entityId = gw->obstacles[i].id,
+                .entityId = gw->obstacles.data[i].id,
                 .entityType = ENTITY_TYPE_OBSTACLE,
                 .collision = rc
             };
@@ -1190,11 +1191,12 @@ MultipleIdentifiedRayCollision resolveMultipleHitsWorld( GameWorld *gw ) {
             }
         }
 
-        for ( int i = 0; i < gw->obstacleQuantity; i++ ) {
-            RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles[i] ) );  
+        for ( int i = 0; i < Obstacles_size( &gw->obstacles ); i++ ) {
+            RayCollision rc = GetRayCollisionBox( ray, getBlockBoundingBox( &gw->obstacles.data[i] ) );
             if ( rc.hit && hitCounter < MAX_HITS ) {
                 hits[hitCounter++] = (IdentifiedRayCollision) {
-                    .entityId = gw->obstacles[i].id,
+                    //.entityId = gw->obstacles[i].id,
+                    .entityId = gw->obstacles.data[i].id,
                     .entityType = ENTITY_TYPE_OBSTACLE,
                     .collision = rc
                 };
@@ -1240,7 +1242,7 @@ int compareRaycollision( const void *pr1, const void *pr2 ) {
 void resetGameWorld( GameWorld *gw ) {
     free( gw->enemies );
     free( gw->powerUps );
-    free( gw->obstacles );
+    //free( gw->obstacles );
     unloadModelsResourceManager();
     configureGameWorld( gw );
 }
@@ -1358,9 +1360,6 @@ void processMapFile( const char *filePath, GameWorld *gw, float blockSize, Color
                         line = -1;
                         break;
                     case 'O':
-                        if ( oCounter == 0 ) {
-                            TraceLog( LOG_INFO, "%d %d", line, column );
-                        }
                         obstaclePositions[oCounter++] = (Vector3) { 
                             column, 
                             currentY, 

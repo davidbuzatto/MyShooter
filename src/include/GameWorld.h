@@ -10,7 +10,11 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "PowerUp.h"
+
 #include "Block.h"
+#define i_TYPE Obstacles, Block
+#include "stc/vec.h"
+
 #include "Bullet.h"
 #include "raylib/raylib.h"
 #include "raylib/rlights.h"
@@ -40,8 +44,8 @@ typedef struct GameWorld {
     
     Block ground;
 
-    Block *obstacles;
-    int obstacleQuantity;
+    // STC vector
+    Obstacles obstacles;
 
     Shader lightShader;
     int ambientLoc;
@@ -104,7 +108,7 @@ void createLights( GameWorld *gw, Vector3 *positions, int lightQuantity, Color l
 void createGroundModel( Block *ground );
 void createLRWallModel( Block *wall );
 void createFNWallModel( Block *wall );
-void createObstaclesModel( Block *obstacles, int obstaclesQuantity );
+void createObstaclesModel( Obstacles *obst );
 
 void createWalls( GameWorld *gw, Color wallColor, int groundLines, int groundColumns, int wallHeight );
 

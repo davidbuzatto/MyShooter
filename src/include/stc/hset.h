@@ -20,59 +20,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifdef i_more
-#undef i_more
-#else
-#undef i_TYPE
-#undef i_type
-#undef i_tag
-#undef i_imp
-#undef i_opt
-#undef i_less
-#undef i_cmp
-#undef i_eq
-#undef i_hash
-#undef i_capacity
-#undef i_raw_class
 
-#undef i_val
-#undef i_val_str
-#undef i_val_ssv
-#undef i_val_arcbox
-#undef i_val_class
-#undef i_valraw
-#undef i_valclone
-#undef i_valfrom
-#undef i_valto
-#undef i_valdrop
+// Unordered set - implemented as closed hashing with linear probing and no tombstones.
+/*
+#define i_type hset_i,int
+#include "stc/hset.h"
+#include <stdio.h>
 
-#undef i_key
-#undef i_key_str
-#undef i_key_ssv
-#undef i_key_arcbox
-#undef i_key_class
-#undef i_keyraw
-#undef i_keyclone
-#undef i_keyfrom
-#undef i_keyto
-#undef i_keydrop
+int main(void) {
+    hset_i s = {0};
+    hset_i_insert(&s, 5);
+    hset_i_insert(&s, 8);
 
-#undef i_use_cmp
-#undef i_use_eq
-#undef i_no_hash
-#undef i_no_clone
-#undef i_no_emplace
-#undef i_is_forward
-#undef i_has_emplace
+    c_foreach (i, hset_i, s)
+        printf("set %d\n", *i.ref);
+    hset_i_drop(&s);
+}
+*/
 
-#undef _i_has_cmp
-#undef _i_has_eq
-#undef _i_prefix
-#undef _i_template
-
-#undef i_keyclass // [deprecated]
-#undef i_valclass // [deprecated]
-#undef i_rawclass // [deprecated]
-#undef i_keyboxed // [deprecated]
-#undef i_valboxed // [deprecated]
-#endif
+#define _i_prefix hset_
+#define _i_isset
+#include "hmap.h"

@@ -22,30 +22,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef CREGEX_H_INCLUDED
-#define CREGEX_H_INCLUDED
+#ifndef STC_CREGEX_H_INCLUDED
+#define STC_CREGEX_H_INCLUDED
 /*
  * cregex.h
- * 
- * This is a extended version of regexp9, supporting UTF8 input, common 
+ *
+ * This is a extended version of regexp9, supporting UTF8 input, common
  * shorthand character classes, ++.
  */
 #include <stdbool.h>
 #include <string.h>
-#include "forward.h" // csview 
-#include "ccommon.h"
+#include "types.h" // csview, cstr types
+#include "common.h"
 
 enum {
     CREG_DEFAULT = 0,
+
     /* compile-flags */
-    CREG_C_DOTALL = 1<<0,    /* dot matches newline too */
-    CREG_C_ICASE = 1<<1,     /* ignore case */
+    CREG_DOTALL = 1<<0,    /* dot matches newline too */
+    CREG_ICASE = 1<<1,     /* ignore case */
+
     /* match-flags */
-    CREG_M_FULLMATCH = 1<<2, /* like start-, end-of-line anchors were in pattern: "^ ... $" */
-    CREG_M_NEXT = 1<<3,      /* use end of previous match[0] as start of input */
-    CREG_M_STARTEND = 1<<4,  /* use match[0] as start+end of input */
+    CREG_FULLMATCH = 1<<2, /* like start-, end-of-line anchors were in pattern: "^ ... $" */
+    CREG_NEXT = 1<<3,      /* use end of previous match[0] as start of input */
+    CREG_STARTEND = 1<<4,  /* use match[0] as start+end of input */
+
     /* replace-flags */
-    CREG_R_STRIP = 1<<5,     /* only keep the matched strings, strip rest */
+    CREG_STRIP = 1<<5,     /* only keep the matched strings, strip rest */
+
     /* limits */
     CREG_MAX_CLASSES = 16,
     CREG_MAX_CAPTURES = 32,
@@ -53,7 +57,6 @@ enum {
 
 typedef enum {
     CREG_OK = 0,
-    CREG_SUCCESS = 0, /* [deprecated] */
     CREG_NOMATCH = -1,
     CREG_MATCHERROR = -2,
     CREG_OUTOFMEMORY = -3,
@@ -81,8 +84,8 @@ typedef struct {
 } cregex_iter;
 
 #define c_formatch(it, Re, Input) \
-    for (cregex_iter it = {Re, Input}; \
-         cregex_find_4(it.re, it.input, it.match, CREG_M_NEXT) == CREG_OK; )
+    for (cregex_iter it = {Re, Input, {{0}}}; \
+         cregex_find_4(it.re, it.input, it.match, CREG_NEXT) == CREG_OK; )
 
 STC_INLINE cregex cregex_init(void) {
     cregex re = {0};
@@ -104,7 +107,7 @@ STC_INLINE cregex cregex_from_2(const char* pattern, int cflags) {
     return re;
 }
 
-/* number of capture groups in a regex pattern including full the match capture, 0 if regex is invalid */
+/* number of capture groups in a regex pattern, excluding the full match capture (0) */
 int cregex_captures(const cregex* re);
 
 /* return CREG_OK, CREG_NOMATCH or CREG_MATCHERROR. */
@@ -116,7 +119,7 @@ int cregex_find_4(const cregex* re, const char* input, csview match[], int mflag
 STC_INLINE int cregex_find_sv(const cregex* re, csview input, csview match[]) {
     csview *mp = NULL;
     if (match) { match[0] = input; mp = match; }
-    return cregex_find(re, input.str, mp, CREG_M_STARTEND);
+    return cregex_find(re, input.buf, mp, CREG_STARTEND);
 }
 
 /* match + compile RE pattern */
@@ -136,13 +139,13 @@ STC_INLINE bool cregex_is_match(const cregex* re, const char* input)
 #define cregex_replace_sv_4(pattern, input, replace, count) \
     cregex_replace_sv_6(pattern, input, replace, count, NULL, CREG_DEFAULT)
 cstr cregex_replace_sv_6(const cregex* re, csview input, const char* replace, int count,
-                       bool (*mfun)(int i, csview match, cstr* mstr), int rflags);
+                         bool (*transform)(int group, csview match, cstr* result), int rflags);
 
 /* replace input with replace using regular expression */
 #define cregex_replace(...) c_MACRO_OVERLOAD(cregex_replace, __VA_ARGS__)
 #define cregex_replace_3(re, input, replace) cregex_replace_4(re, input, replace, INT32_MAX)
 
-STC_INLINE cstr cregex_replace_4(const cregex* re, const char* input, const char* replace, int count) { 
+STC_INLINE cstr cregex_replace_4(const cregex* re, const char* input, const char* replace, int count) {
     csview sv = {input, c_strlen(input)};
     return cregex_replace_sv_4(re, sv, replace, count);
 }
@@ -154,18 +157,19 @@ STC_INLINE cstr cregex_replace_4(const cregex* re, const char* input, const char
 #define cregex_replace_pattern_4(pattern, input, replace, count) \
     cregex_replace_pattern_6(pattern, input, replace, count, NULL, CREG_DEFAULT)
 cstr cregex_replace_pattern_6(const char* pattern, const char* input, const char* replace, int count,
-                              bool (*mfun)(int i, csview match, cstr* mstr), int crflags);
+                              bool (*transform)(int group, csview match, cstr* result), int crflags);
 
 /* destroy regex */
 void cregex_drop(cregex* re);
 
-#endif // CREGEX_H_INCLUDED
-#if defined(i_extern)
-#  include "../../src/cregex.c"
-#  include "../../src/utf8code.c"
-#  undef i_extern
+#endif // STC_CREGEX_H_INCLUDED
+
+#if defined i_implement || defined i_import
+  #include "priv/linkage.h"
+  #include "priv/cregex_prv.c"
+  #if defined i_import
+     #include "priv/utf8_prv.c"
+     #include "priv/cstr_prv.c"
+  #endif
+  #include "priv/linkage2.h"
 #endif
-#undef i_opt
-#undef i_header
-#undef i_static
-#undef i_implement
