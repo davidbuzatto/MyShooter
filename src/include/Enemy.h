@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "Types.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 Enemy createEnemy( Vector3 pos, Color color, Color eyeColor );
 void drawEnemy( Enemy *enemy );

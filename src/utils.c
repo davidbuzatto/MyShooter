@@ -5,8 +5,8 @@
  * 
  * @copyright Copyright (c) 2024
  */
-#include "raylib.h"
 #include "utils.h"
+#include "raylib/raylib.h"
 
 Color interpolate2Color( Color c1, Color c2, float t ) {
     return (Color){

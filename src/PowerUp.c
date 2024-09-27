@@ -7,7 +7,7 @@
 #include "PowerUp.h"
 #include "Block.h"
 #include "ResourceManager.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 PowerUp createPowerUp( Vector3 pos, PowerUpType powerUpType ) {
 

@@ -7,7 +7,7 @@
 #include "Enemy.h"
 #include "Block.h"
 #include "Bullet.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 Bullet createBullet( Vector3 pos, Color color, float radius ) {
 

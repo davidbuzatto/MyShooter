@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Types.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 extern const float GRAVITY;
 

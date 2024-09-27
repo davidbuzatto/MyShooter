@@ -1,7 +1,7 @@
 #include "Types.h"
 #include "ExplosionBillboard.h"
 #include "ResourceManager.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 ExplosionBillboard createExplosionBillboard( Vector3 pos ) {
 

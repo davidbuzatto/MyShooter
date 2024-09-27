@@ -9,7 +9,7 @@
 
 #include <stdlib.h>
 
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 typedef struct ResourceManager {
 

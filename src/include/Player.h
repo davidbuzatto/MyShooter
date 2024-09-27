@@ -4,7 +4,7 @@
 
 #include "Types.h"
 #include "ResourceManager.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 Player createPlayer( Vector3 pos );
 void drawPlayer( Player *player );

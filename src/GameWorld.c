@@ -19,11 +19,11 @@
 #include "Bullet.h"
 #include "Block.h"
 #include "utils.h"
-#include "raylib.h"
-#include "raymath.h"
+#include "raylib/raylib.h"
+#include "raylib/raymath.h"
 
 #define RLIGHTS_IMPLEMENTATION
-#include "rlights.h"
+#include "raylib/rlights.h"
 
 //#include "raymath.h"
 //#define RAYGUI_IMPLEMENTATION    // to use raygui, comment these three lines.

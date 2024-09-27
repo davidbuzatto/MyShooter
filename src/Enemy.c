@@ -9,8 +9,8 @@
 #include "Enemy.h"
 #include "ExplosionBillboard.h"
 #include "ResourceManager.h"
-#include "raylib.h"
-#include "raymath.h"
+#include "raylib/raylib.h"
+#include "raylib/raymath.h"
 
 Enemy createEnemy( Vector3 pos, Color color, Color eyeColor ) {
 

@@ -11,8 +11,8 @@
 #include "Enemy.h"
 #include "Player.h"
 #include "ResourceManager.h"
-#include "raylib.h"
 #include "utils.h"
+#include "raylib/raylib.h"
 
 const int WEAPON_TYPE_QUANTITY = 3;
 

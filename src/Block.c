@@ -1,6 +1,6 @@
 #include "Types.h"
 #include "Block.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 void drawBlock( Block *block ) {
 

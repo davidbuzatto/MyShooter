@@ -11,7 +11,7 @@
 #include "GameWindow.h"
 #include "GameWorld.h"
 #include "ResourceManager.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 /**
  * @brief Creates a dinamically allocated GameWindow struct instance.

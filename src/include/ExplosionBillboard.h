@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Types.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 ExplosionBillboard createExplosionBillboard( Vector3 pos );
 void updateExplosionBillboard( ExplosionBillboard *eb, float delta );

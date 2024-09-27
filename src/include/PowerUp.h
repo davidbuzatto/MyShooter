@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Types.h"
-#include "raylib.h"
+#include "raylib/raylib.h"
 
 PowerUp createPowerUp( Vector3 pos, PowerUpType powerUpType );
 void drawPowerUp( PowerUp *powerUp );

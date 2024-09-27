@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "raylib.h"
 #include "ResourceManager.h"
+#include "raylib/raylib.h"
 
 ResourceManager rm = { 0 };
 
